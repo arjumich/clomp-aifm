@@ -837,7 +837,7 @@ void do_calc_deposit_only()
  */
 void do_omp_barrier_only(long num_iterations)
 {
-#pragma omp parallel
+//#pragma omp parallel
     {
 	/* Thread private variations */
 	long iteration, subcycle;
@@ -849,7 +849,7 @@ void do_omp_barrier_only(long num_iterations)
 	    for (subcycle = 0; subcycle < 10; subcycle++)
 	    {
 		/* Just to omp barrier */
-#pragma omp barrier
+//#pragma omp barrier
 	    }
 	}
     }
@@ -1020,7 +1020,7 @@ void static_omp_module1()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(static)
+//#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 }
@@ -1039,7 +1039,7 @@ void static_omp_module2()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(static)
+//#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 
@@ -1049,7 +1049,7 @@ void static_omp_module2()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(static)
+//#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 }
@@ -1068,7 +1068,7 @@ void static_omp_module3()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(static)
+//#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 
@@ -1078,7 +1078,7 @@ void static_omp_module3()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(static)
+//#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 
@@ -1088,7 +1088,7 @@ void static_omp_module3()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(static)
+//#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 }
@@ -1107,7 +1107,7 @@ void static_omp_module4()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(static)
+//#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 
@@ -1117,7 +1117,7 @@ void static_omp_module4()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(static)
+//#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 
@@ -1127,7 +1127,7 @@ void static_omp_module4()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(static)
+//#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 
@@ -1137,7 +1137,7 @@ void static_omp_module4()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(static)
+//#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 }
@@ -1188,7 +1188,7 @@ void dynamic_omp_module1()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(dynamic)
+//#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 }
@@ -1207,7 +1207,7 @@ void dynamic_omp_module2()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(dynamic)
+//#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 
@@ -1217,7 +1217,7 @@ void dynamic_omp_module2()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(dynamic)
+//#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 }
@@ -1236,7 +1236,7 @@ void dynamic_omp_module3()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(dynamic)
+//#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 
@@ -1246,7 +1246,7 @@ void dynamic_omp_module3()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(dynamic)
+//#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 
@@ -1256,7 +1256,7 @@ void dynamic_omp_module3()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(dynamic)
+//#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 }
@@ -1275,7 +1275,7 @@ void dynamic_omp_module4()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(dynamic)
+//#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 
@@ -1285,7 +1285,7 @@ void dynamic_omp_module4()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(dynamic)
+//#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 
@@ -1295,7 +1295,7 @@ void dynamic_omp_module4()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(dynamic)
+//#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 
@@ -1305,7 +1305,7 @@ void dynamic_omp_module4()
     deposit = calc_deposit ();
     
     /* Scan through zones and add appropriate deposit to each zone */
-#pragma omp parallel for private (pidx) schedule(dynamic)
+//#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
 	update_part (partArray[pidx], deposit);
 }
@@ -1355,10 +1355,10 @@ void manual_omp_module1(int startPidx, int endPidx)
 /* Barrier required to make sure all threads are finished with their portion
  * of their calculation before we use the values they calculate.
  */
-#pragma omp barrier
+//#pragma omp barrier
 
 /* Have only one of the threads calculate the deposit */
-#pragma omp single
+//#pragma omp single
     {
 	/* Calculate deposit for this subcycle based on last subcycle's 
 	 * residue 
@@ -1393,10 +1393,10 @@ void manual_omp_module2(int startPidx, int endPidx)
 /* Barrier required to make sure all threads are finished with their portion
  * of their calculation before we use the values they calculate.
  */
-#pragma omp barrier
+//#pragma omp barrier
 
 /* Have only one of the threads calculate the deposit */
-#pragma omp single
+//#pragma omp single
     {
 	/* Calculate deposit for this subcycle based on last subcycle's 
 	 * residue 
@@ -1423,10 +1423,10 @@ void manual_omp_module2(int startPidx, int endPidx)
 /* Barrier required to make sure all threads are finished with their portion
  * of their calculation before we use the values they calculate.
  */
-#pragma omp barrier
+//#pragma omp barrier
 
 /* Have only one of the threads calculate the deposit */
-#pragma omp single
+//#pragma omp single
     {
 	/* Calculate deposit for this subcycle based on last subcycle's 
 	 * residue 
@@ -1462,10 +1462,10 @@ void manual_omp_module3(int startPidx, int endPidx)
 /* Barrier required to make sure all threads are finished with their portion
  * of their calculation before we use the values they calculate.
  */
-#pragma omp barrier
+//#pragma omp barrier
 
 /* Have only one of the threads calculate the deposit */
-#pragma omp single
+//#pragma omp single
     {
 	/* Calculate deposit for this subcycle based on last subcycle's 
 	 * residue 
@@ -1491,10 +1491,10 @@ void manual_omp_module3(int startPidx, int endPidx)
 /* Barrier required to make sure all threads are finished with their portion
  * of their calculation before we use the values they calculate.
  */
-#pragma omp barrier
+//#pragma omp barrier
 
 /* Have only one of the threads calculate the deposit */
-#pragma omp single
+//#pragma omp single
     {
 	/* Calculate deposit for this subcycle based on last subcycle's 
 	 * residue 
@@ -1520,10 +1520,10 @@ void manual_omp_module3(int startPidx, int endPidx)
 /* Barrier required to make sure all threads are finished with their portion
  * of their calculation before we use the values they calculate.
  */
-#pragma omp barrier
+//#pragma omp barrier
 
 /* Have only one of the threads calculate the deposit */
-#pragma omp single
+//#pragma omp single
     {
 	/* Calculate deposit for this subcycle based on last subcycle's 
 	 * residue 
@@ -1558,10 +1558,10 @@ void manual_omp_module4(int startPidx, int endPidx)
 /* Barrier required to make sure all threads are finished with their portion
  * of their calculation before we use the values they calculate.
  */
-#pragma omp barrier
+//#pragma omp barrier
 
 /* Have only one of the threads calculate the deposit */
-#pragma omp single
+//#pragma omp single
     {
 	/* Calculate deposit for this subcycle based on last subcycle's 
 	 * residue 
@@ -1587,10 +1587,10 @@ void manual_omp_module4(int startPidx, int endPidx)
 /* Barrier required to make sure all threads are finished with their portion
  * of their calculation before we use the values they calculate.
  */
-#pragma omp barrier
+//#pragma omp barrier
 
 /* Have only one of the threads calculate the deposit */
-#pragma omp single
+//#pragma omp single
     {
 	/* Calculate deposit for this subcycle based on last subcycle's 
 	 * residue 
@@ -1617,10 +1617,10 @@ void manual_omp_module4(int startPidx, int endPidx)
 /* Barrier required to make sure all threads are finished with their portion
  * of their calculation before we use the values they calculate.
  */
-#pragma omp barrier
+//#pragma omp barrier
 
 /* Have only one of the threads calculate the deposit */
-#pragma omp single
+//#pragma omp single
     {
 	/* Calculate deposit for this subcycle based on last subcycle's 
 	 * residue 
@@ -1647,10 +1647,10 @@ void manual_omp_module4(int startPidx, int endPidx)
 /* Barrier required to make sure all threads are finished with their portion
  * of their calculation before we use the values they calculate.
  */
-#pragma omp barrier
+//#pragma omp barrier
 
 /* Have only one of the threads calculate the deposit */
-#pragma omp single
+//#pragma omp single
     {
 	/* Calculate deposit for this subcycle based on last subcycle's 
 	 * residue 
@@ -1691,7 +1691,7 @@ void do_manual_omp_version(long num_iterations)
     /* Spawn threads here and manually partition work inside code
      * using thread_id to calculate startPidx and endPidx.
      */
-#pragma omp parallel 
+//#pragma omp parallel 
     {
 	long iteration;
 	int startPidx, endPidx;
@@ -1700,8 +1700,8 @@ void do_manual_omp_version(long num_iterations)
 	/* Use thread_id to determine exactly which parts each
 	 * thread should execute.
 	 */
-	int thread_id = omp_get_thread_num();
-	int numThreads = omp_get_num_threads();
+	int thread_id = 0;
+	int numThreads = 1;
 
 	/* Calculate the avg number of parts per zone to use */
 	dparts_per_thread = ((double)(CLOMP_numParts))/((double)(numThreads));
@@ -1925,7 +1925,7 @@ void do_bestcase_omp_version(long num_iterations)
     /* Spawn threads here and manually partition work inside code
      * using thread_id to calculate startPidx and endPidx.
      */
-#pragma omp parallel 
+//#pragma omp parallel 
     {
 	long iteration;
 	int startPidx, endPidx;
@@ -1934,8 +1934,8 @@ void do_bestcase_omp_version(long num_iterations)
 	/* Use thread_id to determine exactly which parts each
 	 * thread should execute.
 	 */
-	int thread_id = omp_get_thread_num();
-	int numThreads = omp_get_num_threads();
+	int thread_id = 0;
+	int numThreads = 1;
 
 	/* Calculate the avg number of parts per zone to use */
 	dparts_per_thread = ((double)(CLOMP_numParts))/((double)(numThreads));
@@ -2294,7 +2294,7 @@ FarMemManager *far_mem_manager = manager.get();
      * specified.   If threads are used, it may lay out the memory on
      * NUMA system better for threaded computation.
      */
-    omp_set_num_threads ((int)CLOMP_allocThreads);
+    //omp_set_num_threads ((int)CLOMP_allocThreads);
 
 
     /* Allocate part pointer array */
@@ -2320,7 +2320,7 @@ FarMemManager *far_mem_manager = manager.get();
      * Do allocations in thread (allocThreads may be set to 1 for allocate)
      * to allow potentially better memory layout for threads
      */
-#pragma omp parallel for private(partId) schedule(static) 
+//#pragma omp parallel for private(partId) schedule(static) 
     for (partId = 0; partId < CLOMP_numParts; partId++)
     {
 	Part *part;
@@ -2336,7 +2336,7 @@ FarMemManager *far_mem_manager = manager.get();
 	addPart(part, partId);
     }
 
-#pragma omp parallel for private(partId) schedule(static) 
+//#pragma omp parallel for private(partId) schedule(static) 
     /* Create and add zones to parts.
      * Do allocations in thread (allocThreads may be set to 1 for allocate)
      * to allow potentially better memory layout for threads
@@ -2367,7 +2367,7 @@ FarMemManager *far_mem_manager = manager.get();
 #if 0
 	/* Print out memory address for zoneArray to see where it maps */
 	printf ("Part %i threadId %i: zones %p - %p\n", (int)partId,
-		omp_get_thread_num(), zoneArray, &zoneArray[CLOMP_zonesPerPart-1]);
+		0, zoneArray, &zoneArray[CLOMP_zonesPerPart-1]);
 #endif
     }
 
@@ -2498,7 +2498,7 @@ FarMemManager *far_mem_manager = manager.get();
      * specified. Because we are using alloc threads also, have to explicitly
      * set even if using system default 
      */
-    omp_set_num_threads ((int)CLOMP_numThreads);
+    //omp_set_num_threads ((int)CLOMP_numThreads);
 
 
     /* Print initial line bar separator */
