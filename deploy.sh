@@ -15,14 +15,7 @@ rerun_local_iokerneld
 rerun_mem_server
 
 # Run Fluidanimate
-run_program ./clomp 1 -1 1 400 32 1 100 > logs.txt
-
-if cat logs.txt | grep "Passed"; then
-    say_passed
-else
-    say_failed
-    all_passed=0
-fi
+run_program ./clomp 1 -1 1 400 32 1 100 
 
 sleep 3
 

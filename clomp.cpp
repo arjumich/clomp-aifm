@@ -2188,7 +2188,7 @@ FarMemManager *far_mem_manager = manager.get();
     /* Get executable name by pointing to argv[0] */
     CLOMP_exe_name = argv[0];
 
-    printf ("CORAL Benchmark Version 1.2\n");
+    printf ("CORAL Benchmark Version 1.2 --- argc %d\n", argc);
 
     /* Print usage if not 7 arguments */
     if (argc != 8)
@@ -2864,6 +2864,7 @@ int main(int _argc, char *argv[])
 {
     // PORT - Setup Process
   int ret;
+  std::cerr << "_argc " << _argc << "\n" ;
 
   if (_argc < 3) {
     std::cerr << "usage: [cfg_file] [ip_addr:port]" << std::endl;
@@ -2875,9 +2876,11 @@ int main(int _argc, char *argv[])
   std::string ip_addr_port;
   ip_addr_port.assign(argv[2]);
   for (int i = 3; i < _argc; i++) {
-    argv[i - 1] = argv[i];
+    argv[i - 2] = argv[i];
   }
   argc = _argc - 2;
+
+  std::cerr << "_argc " << _argc ;
 
   ret = runtime_init(conf_path, _main, argv);
   if (ret) {
