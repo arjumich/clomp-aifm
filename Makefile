@@ -1,41 +1,20 @@
+# AIFM RUNTIME CONFIGURATION
+AIFM_PATH=../../AIFM
+SHENANGO_PATH=$(AIFM_PATH)/shenango
 
-.PHONY: all
+include $(SHENANGO_PATH)/shared.mk
+librt_libs = $(SHENANGO_PATH)/bindings/cc/librt++.a
+libaifm = $(AIFM_PATH)/aifm/libaifm.a
+
+INC += -I$(SHENANGO_PATH)/bindings/cc -I$(AIFM_PATH)/aifm/inc -I$(SHENANGO_PATH)/ksched -I$(SHENANGO_PATH)/inc/runtime
+LDFLAGS += -lmlx5 -lpthread
+
+
+CXXFLAGS := $(filter-out -std=gnu++17,$(CXXFLAGS))
+override CXXFLAGS += -std=gnu++2a -fconcepts -Wno-unused-function -mcmodel=medium
+CXXFLAGS += -g -fopenmp -O3 -I. $(INC)
+
+LDFLAGS += -g -O3 
+
 all:
-	@echo "Current valid targets:"
-	@echo "${MAKE} icc: Uses Intel's x86 linux compiler"
-	@echo "${MAKE} bgq: Uses IBM's BGQ compiler"
-	@echo "${MAKE} gcc: Uses Gnu's x86 linux compiler"
-
-
-.PHONY: icc
-icc: clomp.c
-	icc -openmp -O3 clomp.c -o clomp
-	@echo "=> Compile of clomp completed."
-	@echo " "
-	mpiicc -DWITH_MPI -openmp -O3 clomp.c -o clomp_mpi
-	@echo "=> Compile of clomp_mpi completed."
-
-.PHONY: bgq
-bgq: clomp.c
-	@echo "=> Starting compile of clomp"
-	bgxlc_r -qsmp=omp -qthreaded -O3 clomp.c -o clomp -lm
-	#/usr/local/tools/compilers/ibm/mpixlc_r-lompbeta2 -qsmp=omp -qthreaded -O3 clomp.c -o clomp -lm
-	@echo "=> Compile of clomp completed."
-	@echo " "
-	@echo "=> Starting compile of clomp_mpi"
-	mpixlc_r -DWITH_MPI -qsmp=omp -qthreaded -O3 clomp.c -o clomp_mpi -lm
-	#/usr/local/tools/compilers/ibm/mpixlc_r-lompbeta2  -DWITH_MPI -qsmp=omp -qthreaded -O3 clomp.c -o clomp_mpi -lm
-	@echo "=> Compile of clomp_mpi completed."
-
-.PHONY: gcc
-gcc: clomp.c
-	@echo "=> Starting compile of clomp"
-	gcc --openmp -O3 clomp.c -o clomp -lm
-	@echo "=> Compile of clomp completed."
-	@echo " "
-	@echo "=> Starting compile of clomp_mpi"
-	mpigcc -DWITH_MPI --openmp -O3 clomp.c -o clomp_mpi -lm
-	@echo "=> Compile of clomp_mpi completed."
-
-
-
+	g++-9 $(CXXFLAGS) clomp.cpp $(librt_libs) $(LDFLAGS) $(libaifm) $(RUNTIME_LIBS) -lm -o clomp $(librt_libs) $(RUNTIME_LIBS)

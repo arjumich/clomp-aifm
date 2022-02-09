@@ -77,6 +77,9 @@ ADDITIONAL BSD NOTICE
    of California, and shall not be used for advertising or product
    endorsement purposes.
 ******************************************************************************/
+extern "C" {
+  #include <runtime/runtime.h>
+}
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,13 +88,45 @@ ADDITIONAL BSD NOTICE
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
+
+#include <climits>
+
+
+#include <ctype.h>
+
+
+
+#include <cstdlib>
+#include <cstring>
+#include <memory>
+
+#include <iostream>
+#include <fstream>
 #include <math.h>
+#include <assert.h>
+#include <vector>
+#include <cmath>
+
+
+
+#include "deref_scope.hpp"
+#include "dataframe_vector.hpp"
+#include "stats.hpp"
+#include "device.hpp"
+#include "helpers.hpp"
+#include "manager.hpp"
+
 #ifdef WITH_MPI
 #include <mpi.h>
 #include <stdarg.h>
 int rank=0;
 int numtasks=0;
 #endif
+
+// PORT - AiFM Setup
+using namespace far_memory;
+
+int argc;
 
 /* Command line parameters, see usage info (initially -1 for sanity check)*/
 long CLOMP_numThreads = -2;       /* > 0 or -1 valid */
@@ -2081,14 +2116,16 @@ void addZone (Part *part, Zone *zone)
 
 
 /*
- * --------------------------------------------------------------------
+ * _main----------------------------------------------------------------
  * Main driver
  * --------------------------------------------------------------------
  */
 
 
-int main (int argc, char *argv[])
+void _main (void *arg)
 {
+    char **argv = static_cast<char **>(arg);
+
     char hostname[200];
     time_t starttime;
     char startdate[50];  /* Must be > 26 characters */
@@ -2118,6 +2155,20 @@ int main (int argc, char *argv[])
 #ifdef WITH_MPI
     int provided, rc;
 #endif
+
+constexpr static uint64_t kCacheSize = (128ULL << 20);
+constexpr static uint64_t kFarMemSize = (4ULL << 30);
+constexpr static uint32_t kNumGCThreads = 12;
+constexpr static uint32_t kNumEntries = (8ULL << 20); // So the array size is larger than the local cache size.
+constexpr static uint32_t kNumConnections = 300;
+
+// CAN THE BELOW BE DONE HERE?
+std::string ip_addr_port = "18.18.1.3:8000";
+auto raddr = helpers::str_to_netaddr(ip_addr_port);
+auto manager = std::unique_ptr<FarMemManager>(FarMemManagerFactory::build(
+    kCacheSize, kNumGCThreads,  new TCPDevice(raddr, kNumConnections, kFarMemSize)));
+
+FarMemManager *far_mem_manager = manager.get();
 
 #ifdef WITH_MPI
     /* Clomp -DWITH_MPI uses MPI_THREAD_FUNNELED model */
@@ -2807,5 +2858,36 @@ int main (int argc, char *argv[])
     MPI_Finalize();
 #endif
 
-    return (0);
+    //return (0);
+}
+int main(int _argc, char *argv[])
+{
+    // PORT - Setup Process
+  int ret;
+
+  if (_argc < 3) {
+    std::cerr << "usage: [cfg_file] [ip_addr:port]" << std::endl;
+    return -EINVAL;
+  }
+
+  char conf_path[strlen(argv[1]) + 1];
+  strcpy(conf_path, argv[1]);
+  std::string ip_addr_port;
+  ip_addr_port.assign(argv[2]);
+  for (int i = 3; i < _argc; i++) {
+    argv[i - 1] = argv[i];
+  }
+  argc = _argc - 2;
+
+  ret = runtime_init(conf_path, _main, argv);
+  if (ret) {
+    std::cerr << "failed to start runtime" << std::endl;
+    return ret;
+  }
+
+  // Port - Send Passed for AiFM
+  std::cout<<"Passed"<<std::endl;
+
+  return 0;
+	
 }
