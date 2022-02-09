@@ -455,7 +455,7 @@ void print_start_message (const char *desc)
 	if (strcmp (desc, "Serial Ref") != 0)
 	{
 	    /* Print out how many threads we are using */
-	    printf ("%13s #Threads: %d\n", desc, omp_get_max_threads());
+	    printf ("%13s #Threads: %d\n", desc, 1);
 	}
 	else
 	{
@@ -2250,7 +2250,7 @@ FarMemManager *far_mem_manager = manager.get();
     if (CLOMP_numThreads == -1)
     {
 	/* Set CLOMP_numThreads to system default if -1 */
-	CLOMP_numThreads = omp_get_max_threads();
+	CLOMP_numThreads = 1;
 
 	/* Print out system default for threads */
 	printf ("      numThreads: %d (using system default)\n", 
