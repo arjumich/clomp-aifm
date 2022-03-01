@@ -2343,26 +2343,57 @@ FarMemManager *far_mem_manager = manager.get();
      */
     for (partId = 0; partId < CLOMP_numParts; partId++)
     {
-	Zone *zoneArray, *zone;
-	int zoneId;
+	//Zone *zoneArray, *zone;
+    int zoneId;
+
+
+    //PORT-- create a vector type of zone 
+    std::vector<zone*> zone;
+    auto vectorZoneArray = far_mem_manager->allocate_dataframe_vector<zone*>();
+
 	
-	/* Allocate an array of zones for this part */
-	zoneArray = (Zone *)malloc (CLOMP_zoneSize * CLOMP_zonesPerPart);
-	if (zoneArray == NULL)
-	{
-	    fprintf (stderr, "Out of memory allocate zone array\n");
-	    exit (1);
-	}
+	//PORT-- populate the created vectorZoneArray?
+    for (int i =0; i<CLOMP_zonesPerPart; i++)
+    {
+        DerefScope scope;
+        struct _Zone* zone = new _Zone;
+        vectorZoneArray->push_back(scope,zone);
+    }
+
+
+	// /* Allocate an array of zones for this part */
+	// zoneArray = (Zone *)malloc (CLOMP_zoneSize * CLOMP_zonesPerPart);
+	// if (zoneArray == NULL)
+	// {
+	//     fprintf (stderr, "Out of memory allocate zone array\n");
+	//     exit (1);
+	// }
 	
-	/* Put all zones into part's zone linked list */
+
+    //PORT-- 
+    /* Put all zones into part's zone linked list */
 	for (zoneId = 0; zoneId < CLOMP_zonesPerPart; zoneId++)
 	{
 	    /* Get the current zone being placed */
-	    zone = &zoneArray[zoneId];
-	    
+	    //zone = &vectorZoneArray[zoneId];
+        DerefScope scope;
+	    Zone *zone = vectorZoneArray->at(scope,zoneId)
+
 	    /* Add it to the end of the the part */
 	    addZone (partArray[partId], zone);
 	}
+
+
+
+	// /* Put all zones into part's zone linked list */
+	// for (zoneId = 0; zoneId < CLOMP_zonesPerPart; zoneId++)
+	// {
+	//     /* Get the current zone being placed */
+	//     zone = &zoneArray[zoneId];
+	    
+	//     /* Add it to the end of the the part */
+	//     addZone (partArray[partId], zone);
+	// }
 	
 #if 0
 	/* Print out memory address for zoneArray to see where it maps */
