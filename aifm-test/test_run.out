@@ -1,0 +1,280 @@
+CPU 13| <5> cpu: detected 20 cores, 1 nodes
+CPU 13| <5> time: detected 2394 ticks / us
+[  0.000658] CPU 13| <5> loading configuration from '/users/arjunsh/AIFM/aifm/configs/client.config'
+[  0.000714] CPU 13| <3> < 1 guaranteed kthreads is not recommended for networked apps
+[  0.016903] CPU 13| <5> net: started network stack
+[  0.016927] CPU 13| <5> net: using the following configuration:
+[  0.016933] CPU 13| <5>   addr:	18.18.1.2
+[  0.016938] CPU 13| <5>   netmask:	255.255.255.0
+[  0.016943] CPU 13| <5>   gateway:	18.8.1.1
+[  0.016949] CPU 13| <5>   mac:	4A:BB:59:BF:7F:89
+[  0.390520] CPU 13| <5> thread: created thread 0
+[  0.390662] CPU 13| <5> spawning 18 kthreads
+[  0.390819] CPU 14| <5> thread: created thread 1
+[  0.390915] CPU 05| <5> thread: created thread 2
+[  0.390993] CPU 06| <5> thread: created thread 3
+[  0.391221] CPU 19| <5> thread: created thread 4
+[  0.391376] CPU 08| <5> thread: created thread 5
+[  0.391495] CPU 08| <5> thread: created thread 6
+[  0.391828] CPU 01| <5> thread: created thread 7
+[  0.392066] CPU 03| <5> thread: created thread 8
+[  0.392192] CPU 05| <5> thread: created thread 9
+[  0.392365] CPU 06| <5> thread: created thread 10
+[  0.392540] CPU 08| <5> thread: created thread 11
+[  0.392813] CPU 05| <5> thread: created thread 12
+[  0.392936] CPU 19| <5> thread: created thread 13
+[  0.393102] CPU 03| <5> thread: created thread 14
+[  0.393227] CPU 11| <5> thread: created thread 15
+[  0.393373] CPU 04| <5> thread: created thread 16
+[  0.393510] CPU 14| <5> thread: created thread 17
+Running test/test_array_add.cpp...
+Passed
+[ 25.109290] CPU 16| <5> init: shutting down -> SUCCESS
+CPU 14| <5> cpu: detected 20 cores, 1 nodes
+CPU 14| <5> time: detected 2394 ticks / us
+[  0.000644] CPU 14| <5> loading configuration from '/users/arjunsh/AIFM/aifm/configs/client.config'
+[  0.000698] CPU 14| <3> < 1 guaranteed kthreads is not recommended for networked apps
+[  0.016807] CPU 14| <5> net: started network stack
+[  0.016832] CPU 14| <5> net: using the following configuration:
+[  0.016837] CPU 14| <5>   addr:	18.18.1.2
+[  0.016842] CPU 14| <5>   netmask:	255.255.255.0
+[  0.016847] CPU 14| <5>   gateway:	18.8.1.1
+[  0.016851] CPU 14| <5>   mac:	22:A9:08:0E:AD:0B
+[  0.392305] CPU 14| <5> thread: created thread 0
+[  0.392445] CPU 14| <5> spawning 18 kthreads
+[  0.392621] CPU 05| <5> thread: created thread 1
+[  0.392654] CPU 06| <5> thread: created thread 2
+[  0.392767] CPU 07| <5> thread: created thread 3
+[  0.392946] CPU 15| <5> thread: created thread 4
+[  0.393065] CPU 02| <5> thread: created thread 5
+[  0.393251] CPU 19| <5> thread: created thread 6
+[  0.393432] CPU 04| <5> thread: created thread 7
+[  0.393839] CPU 02| <5> thread: created thread 8
+[  0.393959] CPU 05| <5> thread: created thread 9
+[  0.394113] CPU 17| <5> thread: created thread 10
+[  0.394287] CPU 14| <5> thread: created thread 11
+[  0.394454] CPU 12| <5> thread: created thread 12
+[  0.394606] CPU 09| <5> thread: created thread 13
+[  0.394752] CPU 09| <5> thread: created thread 14
+[  0.394972] CPU 11| <5> thread: created thread 15
+[  0.395201] CPU 12| <5> thread: created thread 16
+[  0.395497] CPU 12| <5> thread: created thread 17
+POOssed
+[ 67.181118] CPU 08| <5> init: shutting down -> SUCCESS
+CPU 16| <5> cpu: detected 20 cores, 1 nodes
+CPU 16| <5> time: detected 2394 ticks / us
+[  0.000645] CPU 16| <5> loading configuration from '/users/arjunsh/AIFM/aifm/configs/client.config'
+[  0.000699] CPU 16| <3> < 1 guaranteed kthreads is not recommended for networked apps
+[  0.018001] CPU 16| <5> net: started network stack
+[  0.018026] CPU 16| <5> net: using the following configuration:
+[  0.018031] CPU 16| <5>   addr:	18.18.1.2
+[  0.018036] CPU 16| <5>   netmask:	255.255.255.0
+[  0.018041] CPU 16| <5>   gateway:	18.8.1.1
+[  0.018045] CPU 16| <5>   mac:	1A:5C:E6:FE:E9:DE
+[  0.390312] CPU 16| <5> thread: created thread 0
+[  0.390455] CPU 16| <5> spawning 18 kthreads
+[  0.390615] CPU 08| <5> thread: created thread 1
+[  0.390660] CPU 11| <5> thread: created thread 2
+[  0.390800] CPU 17| <5> thread: created thread 3
+[  0.390919] CPU 12| <5> thread: created thread 4
+[  0.391091] CPU 04| <5> thread: created thread 5
+[  0.391357] CPU 01| <5> thread: created thread 6
+[  0.391635] CPU 15| <5> thread: created thread 7
+[  0.391849] CPU 06| <5> thread: created thread 8
+[  0.392133] CPU 18| <5> thread: created thread 9
+[  0.392207] CPU 11| <5> thread: created thread 10
+[  0.392329] CPU 03| <5> thread: created thread 11
+[  0.392597] CPU 16| <5> thread: created thread 12
+[  0.392748] CPU 02| <5> thread: created thread 13
+[  0.392937] CPU 07| <5> thread: created thread 14
+[  0.393159] CPU 13| <5> thread: created thread 15
+[  0.393286] CPU 14| <5> thread: created thread 16
+[  0.393466] CPU 06| <5> thread: created thread 17
+Running test/test_array_add.cpp...
+13322902508317716801
+11563766559229729999
+14436651330718819571
+10215942735175188106
+4754229364775828671
+1459018687462280605
+Possed
+[ 25.129905] CPU 17| <5> init: shutting down -> SUCCESS
+CPU 06| <5> cpu: detected 20 cores, 1 nodes
+CPU 06| <5> time: detected 2394 ticks / us
+[  0.000673] CPU 06| <5> loading configuration from '/users/arjunsh/AIFM/aifm/configs/client.config'
+[  0.000747] CPU 06| <3> < 1 guaranteed kthreads is not recommended for networked apps
+[  0.018432] CPU 06| <5> net: started network stack
+[  0.018457] CPU 06| <5> net: using the following configuration:
+[  0.018464] CPU 06| <5>   addr:	18.18.1.2
+[  0.018470] CPU 06| <5>   netmask:	255.255.255.0
+[  0.018476] CPU 06| <5>   gateway:	18.8.1.1
+[  0.018482] CPU 06| <5>   mac:	AA:D0:1F:0B:AE:37
+[  0.388611] CPU 06| <5> thread: created thread 0
+[  0.388780] CPU 06| <5> spawning 18 kthreads
+[  0.388940] CPU 07| <5> thread: created thread 1
+[  0.389053] CPU 08| <5> thread: created thread 2
+[  0.389088] CPU 19| <5> thread: created thread 3
+[  0.389226] CPU 02| <5> thread: created thread 4
+[  0.389286] CPU 03| <5> thread: created thread 5
+[  0.389654] CPU 05| <5> thread: created thread 6
+[  0.389888] CPU 11| <5> thread: created thread 7
+[  0.390039] CPU 16| <5> thread: created thread 8
+[  0.390270] CPU 15| <5> thread: created thread 9
+[  0.390445] CPU 09| <5> thread: created thread 10
+[  0.390718] CPU 06| <5> thread: created thread 11
+[  0.390856] CPU 19| <5> thread: created thread 12
+[  0.390926] CPU 17| <5> thread: created thread 13
+[  0.391099] CPU 18| <5> thread: created thread 14
+[  0.391275] CPU 01| <5> thread: created thread 15
+[  0.391522] CPU 13| <5> thread: created thread 16
+[  0.391648] CPU 16| <5> thread: created thread 17
+Running test/test_array_add.cpp...
+0
+2
+12
+30
+56
+90
+Possed
+[ 25.027690] CPU 11| <5> init: shutting down -> SUCCESS
+CPU 18| <5> cpu: detected 20 cores, 1 nodes
+CPU 18| <5> time: detected 2394 ticks / us
+[  0.000654] CPU 18| <5> loading configuration from '/users/arjunsh/AIFM/aifm/configs/client.config'
+[  0.000711] CPU 18| <3> < 1 guaranteed kthreads is not recommended for networked apps
+[  0.019115] CPU 18| <5> net: started network stack
+[  0.019139] CPU 18| <5> net: using the following configuration:
+[  0.019144] CPU 18| <5>   addr:	18.18.1.2
+[  0.019149] CPU 18| <5>   netmask:	255.255.255.0
+[  0.019154] CPU 18| <5>   gateway:	18.8.1.1
+[  0.019158] CPU 18| <5>   mac:	FA:0E:EF:2B:00:8F
+[  0.393469] CPU 18| <5> thread: created thread 0
+[  0.393619] CPU 18| <5> spawning 18 kthreads
+[  0.393796] CPU 11| <5> thread: created thread 1
+[  0.393817] CPU 02| <5> thread: created thread 2
+[  0.393952] CPU 13| <5> thread: created thread 3
+[  0.394203] CPU 05| <5> thread: created thread 4
+[  0.394337] CPU 14| <5> thread: created thread 5
+[  0.394551] CPU 16| <5> thread: created thread 6
+[  0.394735] CPU 07| <5> thread: created thread 7
+[  0.395089] CPU 08| <5> thread: created thread 8
+[  0.395194] CPU 09| <5> thread: created thread 9
+[  0.395367] CPU 12| <5> thread: created thread 10
+[  0.395534] CPU 06| <5> thread: created thread 11
+[  0.395744] CPU 17| <5> thread: created thread 12
+[  0.395940] CPU 13| <5> thread: created thread 13
+[  0.396077] CPU 16| <5> thread: created thread 14
+[  0.396175] CPU 04| <5> thread: created thread 15
+[  0.396405] CPU 09| <5> thread: created thread 16
+[  0.396628] CPU 07| <5> thread: created thread 17
+Running test/test_array_add.cpp...
+0
+2
+12
+30
+56
+90
+0026122030425672Possed
+[ 25.027825] CPU 07| <5> init: shutting down -> SUCCESS
+CPU 18| <5> cpu: detected 20 cores, 1 nodes
+CPU 18| <5> time: detected 2394 ticks / us
+[  0.000649] CPU 18| <5> loading configuration from '/users/arjunsh/AIFM/aifm/configs/client.config'
+[  0.000704] CPU 18| <3> < 1 guaranteed kthreads is not recommended for networked apps
+[  0.017142] CPU 18| <5> net: started network stack
+[  0.017167] CPU 18| <5> net: using the following configuration:
+[  0.017174] CPU 18| <5>   addr:	18.18.1.2
+[  0.017179] CPU 18| <5>   netmask:	255.255.255.0
+[  0.017185] CPU 18| <5>   gateway:	18.8.1.1
+[  0.017190] CPU 18| <5>   mac:	8A:37:C6:97:46:C6
+[  0.382400] CPU 18| <5> thread: created thread 0
+[  0.382542] CPU 18| <5> spawning 18 kthreads
+[  0.382713] CPU 19| <5> thread: created thread 1
+[  0.382770] CPU 01| <5> thread: created thread 2
+[  0.382892] CPU 02| <5> thread: created thread 3
+[  0.383097] CPU 04| <5> thread: created thread 4
+[  0.383283] CPU 06| <5> thread: created thread 5
+[  0.383454] CPU 15| <5> thread: created thread 6
+[  0.383641] CPU 17| <5> thread: created thread 7
+[  0.383796] CPU 08| <5> thread: created thread 8
+[  0.383958] CPU 17| <5> thread: created thread 9
+[  0.384068] CPU 05| <5> thread: created thread 10
+[  0.384253] CPU 13| <5> thread: created thread 11
+[  0.384413] CPU 07| <5> thread: created thread 12
+[  0.384647] CPU 11| <5> thread: created thread 13
+[  0.384867] CPU 14| <5> thread: created thread 14
+[  0.385053] CPU 15| <5> thread: created thread 15
+[  0.385294] CPU 11| <5> thread: created thread 16
+[  0.385483] CPU 01| <5> thread: created thread 17
+Running test/test_array_add.cpp...
+0
+2
+12
+30
+56
+90
+0
+0
+2
+6
+12
+20
+30
+42
+56
+72
+Possed
+[ 24.792040] CPU 02| <5> init: shutting down -> SUCCESS
+CPU 08| <5> cpu: detected 20 cores, 1 nodes
+CPU 08| <5> time: detected 2394 ticks / us
+[  0.000644] CPU 08| <5> loading configuration from '/users/arjunsh/AIFM/aifm/configs/client.config'
+[  0.000700] CPU 08| <3> < 1 guaranteed kthreads is not recommended for networked apps
+[  0.019164] CPU 08| <5> net: started network stack
+[  0.019188] CPU 08| <5> net: using the following configuration:
+[  0.019194] CPU 08| <5>   addr:	18.18.1.2
+[  0.019199] CPU 08| <5>   netmask:	255.255.255.0
+[  0.019204] CPU 08| <5>   gateway:	18.8.1.1
+[  0.019209] CPU 08| <5>   mac:	0E:99:22:F0:BA:CB
+[  0.389680] CPU 08| <5> thread: created thread 0
+[  0.389824] CPU 08| <5> spawning 18 kthreads
+[  0.389966] CPU 09| <5> thread: created thread 1
+[  0.390024] CPU 11| <5> thread: created thread 2
+[  0.390095] CPU 12| <5> thread: created thread 3
+[  0.390260] CPU 14| <5> thread: created thread 4
+[  0.390455] CPU 06| <5> thread: created thread 5
+[  0.390760] CPU 07| <5> thread: created thread 6
+[  0.390918] CPU 01| <5> thread: created thread 7
+[  0.391303] CPU 13| <5> thread: created thread 8
+[  0.391445] CPU 08| <5> thread: created thread 9
+[  0.391658] CPU 05| <5> thread: created thread 10
+[  0.391864] CPU 17| <5> thread: created thread 11
+[  0.392065] CPU 18| <5> thread: created thread 12
+[  0.392481] CPU 11| <5> thread: created thread 13
+[  0.392605] CPU 03| <5> thread: created thread 14
+[  0.392827] CPU 04| <5> thread: created thread 15
+[  0.392987] CPU 16| <5> thread: created thread 16
+[  0.393259] CPU 05| <5> thread: created thread 17
+Running test/test_array_add.cpp...
+0
+0
+2
+6
+12
+20
+30
+42
+56
+72
+90
+-----------------
+0
+0
+2
+6
+12
+20
+30
+42
+56
+72
+90
+Possed
+[ 25.038914] CPU 14| <5> init: shutting down -> SUCCESS
