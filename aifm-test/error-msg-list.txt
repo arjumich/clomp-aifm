@@ -1,0 +1,107 @@
+Expression tried on AIFM and errors 
+-----------------------------------------
+
+#auto partArray = manager->allocate_array<Part **, CLOMP_numParts>(); //intially error was stating 
+                                                                    //CLOMP_numParts has to be const
+error: assignment of read-only variable ‘CLOMP_numParts’
+  127 | CLOMP_numParts = 2;
+
+//removing const in long CLOMP_numParts =2 
+error: no matching function for call to ‘far_memory::FarMemManager::allocate_array<Part**, CLOMP_numParts>()’
+  140 | auto partArray = manager->allocate_array<Part **, CLOMP_numParts>();
+      |                                                                   ^
+In file included from test/test_array_add.cpp:7:
+inc/manager.hpp:172:61: note: candidate: ‘template<class T, long unsigned int ...Dims> far_memory::Array<T, Dims ...> far_memory::FarMemManager::allocate_array()’
+  172 |   template <typename T, uint64_t... Dims> Array<T, Dims...> allocate_array();
+      |                                                             ^~~~~~~~~~~~~~
+inc/manager.hpp:172:61: note:   template argument deduction/substitution failed:
+test/test_array_add.cpp:140:67: error: the value of ‘CLOMP_numParts’ is not usable in a constant expression
+  140 | auto partArray = manager->allocate_array<Part **, CLOMP_numParts>();
+      |                                                                   ^
+test/test_array_add.cpp:26:6: note: ‘long int CLOMP_numParts’ is not const
+   26 | long CLOMP_numParts = 2;         /* > 0 valid */
+      |      ^~~~~~~~~~~~~~
+test/test_array_add.cpp:140:67: note: in template argument for type ‘long unsigned int’
+  140 | auto partArray = manager->allocate_array<Part **, CLOMP_numParts>();
+
+
+-->Solved. Have to express CLOMP_numParts as constexpr. But is that possibkle for clomp? 
+I dont think so because CLOMP_numParts is a variable provided while prog initialization.
+
+
+
+#for (partId = 0; partId < CLOMP_numParts; partId++)
+
+Error: partId was not declared in this scope 
+solve by declaring partId as long while initialization
+
+
+#partArray.at_mut(partId,scope) = part; //line 66
+error: request for member ‘at_mut’ in ‘partArray’, which is of non-class type ‘Part**’ {aka ‘_Part**’}
+   66 |   partArray.at_mut(partId,scope) = part;
+
+
+#for (long partId = 0; partId < CLOMP_numParts; partId++)
+{
+	Zone *zoneArray, *zone;
+	int zoneId;
+
+  auto zoneArray = manager->allocate_array<Zone *, CLOMP_zonesPerPart>();
+
+}
+
+error: conflicting declaration ‘auto zoneArray’
+  120 |   auto zoneArray = manager->allocate_array<Zone *, CLOMP_zonesPerPart>();
+      |        ^~~~~~~~~
+test/test_array_add.cpp:117:8: note: previous declaration as ‘Zone* zoneArray’
+  117 |  Zone *zoneArray, *zone;
+
+Solution: remove Zone *zoneArray, *zone inside the block. But will this work? are we changing 
+the clomp ds? need to figure that out. for now, letting it be. 
+
+
+#addZone (partArray[partId], zone);
+error: no match for ‘operator[]’ (operand types are ‘far_memory::Array<_Part**, 2>’ and ‘long int’)
+  135 |    addZone (partArray[partId], zone);
+
+solution?? use .at operator. addZone (partArray.at(partId), zone);
+
+#addZone (partArray.at(partId), zone);
+
+#addZone (partArray.at_mut(scope,partId), zone)
+error: cannot convert ‘_Zone* const**’ to ‘Zone*’ {aka ‘_Zone*’}
+  135 |    addZone (partArray.at_mut(scope,partId), &zone);
+      |                                             ^~~~~
+      |                                             |
+      |                                             _Zone* const**
+test/test_array_add.cpp:78:34: note:   initializing argument 2 of ‘void addZone(Part**, Zone*)’
+   78 | void addZone (Part **part, Zone *zone)
+
+solution: was passing zone in fnc call, but had *zone in fnc definition. 
+addZone (partArray.at_mut(scope,partId), *zone)
+
+
+#addZone (partArray.at_mut(scope,partId), zone)
+error: cannot convert ‘_Part**’ to ‘Part*’ {aka ‘_Part*’}
+  134 |    addZone (partArray.at_mut(scope,partId), zone);
+      |             ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~
+      |                             |
+      |                             _Part**
+test/test_array_add.cpp:78:21: note:   initializing argument 1 of ‘void addZone(Part*, Zone*)’
+   78 | void addZone (Part **part, Zone *zone)
+
+Solution: pass double pointer in fnc definition
+void addZone (Part **part, Zone *zone)
+
+
+#if (*part->lastZone == NULL)
+error: request for member ‘lastZone’ in ‘* part’, which is of pointer type ‘Part*’ {aka ‘_Part*’} (maybe you meant to use ‘->’ ?)
+   83 |     if (*part->lastZone == NULL)
+
+Solution: if ((*part)->lastZone == NULL)
+
+#zone->zoneId = part->lastZone->zoneId + 1;
+error: request for member ‘lastZone’ in ‘* part’, which is of pointer type ‘Part*’ {aka ‘_Part*’} (maybe you meant to use ‘->’ ?)
+   97 |      zone->zoneId = part->lastZone->zoneId + 1
+
+Solution: 
