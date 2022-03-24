@@ -67,34 +67,61 @@ struct unique_ptr_part
 using  unique_ptr_part_t = struct unique_ptr_part;
 
 /* Part array working on (now array of Part pointers)*/
-Part **partArray = NULL;    //LL - What is it doing here? initializing the part double pointer 
+//Part **partArray = NULL;    //LL - What is it doing here? initializing the part double pointer 
                             // But how to modify this for aifm?
 
 
 //**addPart is not working with AIFM. Need to check again.
-void addPart (Part *part, long partId)
+void addPart (UniquePtr<Part> *part, long partId)
 {
-  //DerefScope scope;
+  {
+    DerefScope scope;
+    auto &pointer_loc = partArray.at_mut(scope,partId);
+    pointer_loc_ptr = &pointer_loc;
+    auto raw_pointer_loc = pointer_loc_ptr->deref_mut(scope);
+    raw_pointer_loc = part;
 
-  /* Put part pointer in array */
-  //partArray.at_mut(scope,partId) = part;
-  partArray[partId] = part;
+    //   auto &pointer_loc = partArray.at_mut(scope,partId);
+    //   pointer_loc_ptr = &pointer_loc;
+    //   auto raw_pointer_loc = pointer_loc_ptr->deref_mut(scope);
+    //   raw_pointer_loc = NULL;
+  }
 
-  /* Set partId */
-  part->partId = partId;
-    
-  /* Set zone count for part (now fixed, used to be variable */
-  //part->zoneCount = CLOMP_zonesPerPart;
+
+  {
+
+    DerefScope scope;
+    auto part_val = part->deref_mut(scope);
+
+    /* Put part pointer in array */
+    //partArray.at_mut(scope,partId) = part;
+
+
+
+    //partArray[partId] = part_val;
+
+    /* Set partId */
+    part_val->partId = partId;
+      
+    /* Set zone count for part (now fixed, used to be variable */
+    //part->zoneCount = CLOMP_zonesPerPart;
+
+  }
+  
 }
 
-void addZone (UniquePtr<Part> part, Zone *zone)
+void addZone (UniquePtr<Part> *part, Zone *zone)
 {
   memset (zone, 0xFF, CLOMP_zoneSize);
 
+  //cout<<"test if it enters...........";
+
+  //cout<< typeid(part).name();
+//#if 0
   /* If not existing zones, place at head of list */
     {
-    DerefScope scope;
-      auto part_val = part.deref_mut(scope);
+      DerefScope scope;
+      auto part_val = part->deref_mut(scope);
       if (part_val->lastZone==NULL)
       {
         zone->zoneId = 1;
@@ -137,6 +164,7 @@ void addZone (UniquePtr<Part> part, Zone *zone)
     // /* Inialized the rest of the zone fields */
     // zone->partId = (*part)->partId;
     // zone->value = 0.0;
+  //  #endif
 }
 
 struct Data4096 {
@@ -150,6 +178,7 @@ void do_work(FarMemManager *manager) {
 constexpr long CLOMP_numParts = 2;
 constexpr long CLOMP_zonesPerPart = 10;
 CLOMP_zoneSize = 32;
+UniquePtr<Part> *pointer_loc_ptr;
 //CLOMP_flopScale = convert_to_positive_long ("flopScale", argv[6]);
 //CLOMP_timeScale = convert_to_positive_long ("timeScale", argv[7])
 
@@ -162,9 +191,10 @@ CLOMP_zoneSize = 32;
 
 //auto part_pointer = manager->allocate_unique_ptr<Part>();
 
-//auto partArray = manager->allocate_array<UniquePtr<Part>, CLOMP_numParts>();
-auto partArray = manager->allocate_array<unique_ptr_part_t, CLOMP_numParts>();
-//auto partArray = manager->allocate_array<Data_t, CLOMP_numParts>();
+
+//TODO need to declare this as global, error: partArray’ was not declared in this scope
+auto partArray = manager->allocate_array<UniquePtr<Part>, CLOMP_numParts>();
+//auto partArray = manager->allocate_array<unique_ptr_part_t, CLOMP_numParts>();
 
 for (long partId = 0; partId < CLOMP_numParts; partId++)
     {
@@ -172,18 +202,17 @@ for (long partId = 0; partId < CLOMP_numParts; partId++)
       //partArray.at_mut(scope, partId) = NULL;
       //cout<<"Lines per part"<<endl;
 
-     auto pointer_loc = partArray.at(scope,partId);
-     {
-       DerefScope scope;
-       auto raw_pointer_loc = pointer_loc.deref_mut(scope);
-       //
-     }
+      auto &pointer_loc = partArray.at_mut(scope,partId);
+      pointer_loc_ptr = &pointer_loc;
+      auto raw_pointer_loc = pointer_loc_ptr->deref_mut(scope);
+      raw_pointer_loc = NULL;
 
     } 
 
 for (long partId = 0; partId < CLOMP_numParts; partId++)
     {
-	    Part* part;
+	    //Part* part;
+      UniquePtr<Part> *part;
 	    // if ((part= (Part *) malloc (sizeof (Part))) == NULL)
 	    //   {
 	    //     fprintf (stderr, "Out of memory allocating part\n");
@@ -208,7 +237,11 @@ for (long partId = 0; partId < CLOMP_numParts; partId++)
 	  auto zone = &zoneArray.at(scope,zoneId);
 	    
 	  /* Add it to the end of the the part */
-	  addZone (partArray.at_mut(scope,partId), *zone);
+
+    
+	  auto &pointer_loc = partArray.at_mut(scope,partId);
+    pointer_loc_ptr = &pointer_loc;
+    addZone (pointer_loc_ptr, *zone);
 
   }
 
