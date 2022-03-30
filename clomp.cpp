@@ -125,6 +125,7 @@ int numtasks=0;
 
 // PORT - AiFM Setup
 using namespace far_memory;
+using namespace std;
 
 int argc;
 
@@ -148,7 +149,8 @@ typedef struct _Zone
     long zoneId;
     long partId;
     double value;
-    struct _Zone *nextZone;
+    //struct _Zone *nextZone; // how do I convert this.
+    struct UniquePtr<_Zone> *nextZone;
 } Zone;
 
 
@@ -158,8 +160,10 @@ typedef struct _Part
     long partId;
     long zoneCount;
     long update_count;  
-    Zone *firstZone;
-    Zone *lastZone;
+    //Zone *firstZone;
+    //Zone *lastZone;
+    UniquePtr<Zone> *firstZone; // PORT 
+    UniquePtr<Zone> *lastZone;
     double deposit_ratio;
     double residue;
     double expected_first_value; /* Used to check results */
@@ -167,7 +171,14 @@ typedef struct _Part
 } Part;
 
 /* Part array working on (now array of Part pointers)*/
-Part **partArray = NULL;
+//Part **partArray = NULL;
+
+// PORT - global declare partArray
+far_memory::Array<UniquePtr<Part>> *partArray;
+UniquePtr<Part> *pointer_loc_ptr_part;
+UniquePtr<Zone> *pointer_loc_zone;
+
+
 
 /* Used to avoid dividing by numParts */
 double CLOMP_partRatio =0.0;
@@ -2003,9 +2014,11 @@ void do_bestcase_omp_version(long num_iterations)
  * The partArray has to be allocated by one thread but it is not
  * modified during the run.
  */
+
+/* 
 void addPart (Part *part, long partId)
 {
-    /* Sanity check, make sure partId valid */
+    // Sanity check, make sure partId valid 
     if ((partId < 0) || (partId >= CLOMP_numParts))
     {
 	fprintf (stderr, "addPart error: partId (%i) out of bounds!\n", (int)partId);
@@ -2013,7 +2026,7 @@ void addPart (Part *part, long partId)
     }
       
 
-    /* Sanity check, make sure part not already added! */
+    // Sanity check, make sure part not already added! 
     if (partArray[partId] != NULL)
     {
 	fprintf (stderr, "addPart error: partId (%i) already initialized!\n",
@@ -2021,13 +2034,13 @@ void addPart (Part *part, long partId)
 	exit (1);
     }
 
-    /* Put part pointer in array */
+    // Put part pointer in array 
     partArray[partId] = part;
 
-    /* Set partId */
+    // Set partId 
     part->partId = partId;
     
-    /* Set zone count for part (now fixed, used to be variable */
+    // Set zone count for part (now fixed, used to be variable 
     part->zoneCount = CLOMP_zonesPerPart;
     
     /* Updated June 2010 by John Gyllenhaal to pick a deposit ratio 
@@ -2041,78 +2054,180 @@ void addPart (Part *part, long partId)
      * incorrect results due to races or bad hardware.
      * 
      * The older deposit_ratio only really worked well for 100 zones.
-     */
+     
     part->deposit_ratio=((double)((1.5*(double)CLOMP_numParts)+partId))/
 	((double)(CLOMP_zonesPerPart*CLOMP_numParts));
     
-    /* Initially no residue from previous passes */
+    // Initially no residue from previous passes 
     part->residue = 0.0;
     
-    /* Initially, no zones attached to part */
+    // Initially, no zones attached to part 
     part->firstZone = NULL;
     part->lastZone = NULL;
     
-    /* Initially, don't know expected values (used for checking */
+    // Initially, don't know expected values (used for checking 
     part->expected_first_value = -1.0;
     part->expected_residue = -1.0;
+}*/
+
+// PORT - clomp-aifm implementation of addPart
+
+void addPart (UniquePtr<Part> *part, long partId)
+{
+
+    // Put part pointer in array TODO - NULL checking is still remaining 
+  {
+    DerefScope scope;
+    auto &pointer_loc = partArray->at_mut(scope,partId);
+    pointer_loc_ptr_part = &pointer_loc;
+    auto raw_pointer_loc = pointer_loc_ptr_part->deref_mut(scope);
+    raw_pointer_loc = part->deref_mut(scope);
+    //cout<< typeid(raw_pointer_loc).name();
+
+  }
+
+    // Set other part properties 
+  {
+
+    DerefScope scope;
+    auto part_val = part->deref_mut(scope);
+
+    /* Set partId */
+    part_val->partId = partId;
+      
+    /* Set zone count for part (now fixed, used to be variable */
+    part_val->zoneCount = CLOMP_zonesPerPart;
+
+    /* Updated June 2010 by John Gyllenhaal to pick a deposit ratio 
+     * for this part that keeps the math from underflowing and 
+     * makes it possible to come up with a sane error bounds.
+     * This math was picked experimentally to come up with 
+     * relatively large error bounds for the 'interesting testcase' inputs.
+     *
+     * This is part of an effort to separate rounding error due
+     * to inlining update_part() (and optimizing different ways) from
+     * incorrect results due to races or bad hardware.
+     * 
+     * The older deposit_ratio only really worked well for 100 zones.
+     */
+    part_val->deposit_ratio=((double)((1.5*(double)CLOMP_numParts)+partId))/
+	((double)(CLOMP_zonesPerPart*CLOMP_numParts));
+    
+    /* Initially no residue from previous passes */
+    part_val->residue = 0.0;
+    
+    /* Initially, no zones attached to part */
+    part_val->firstZone = NULL;
+    part_val->lastZone = NULL;
+    
+    /* Initially, don't know expected values (used for checking */
+    part_val->expected_first_value = -1.0;
+    part_val->expected_residue = -1.0;
+
+  }
+  
 }
+
+
 
 /* Appends zone to the part identified by partId.   Done in separate routine
  * to facilitate the zones being allocated in various ways (such as by 
  * different threads, randomly, etc.)
  */
+
+/*
 void addZone (Part *part, Zone *zone)
 {
-    /* Sanity check, make sure not NULL */
+    // Sanity check, make sure not NULL 
     if (part == NULL)
     {
 	fprintf (stderr, "addZone error: part NULL!\n");
 	exit (1);
     }
 
-    /* Sanity check, make sure zone not NULL */
+    // Sanity check, make sure zone not NULL 
     if (zone == NULL)
     {
 	fprintf (stderr, "addZone error: zone NULL!\n");
 	exit (1);
     }
 
-    /* Touch/initialize all of zone to force all memory to be really 
-     * allocated (CLOMP_zoneSize is often bigger than the portion of the
-     * zone we use)
-     */
+    // Touch/initialize all of zone to force all memory to be really 
+    // allocated (CLOMP_zoneSize is often bigger than the portion of the
+    // zone we use)
+
     memset (zone, 0xFF, CLOMP_zoneSize);
 
 
-    /* If not existing zones, place at head of list */
+    // If not existing zones, place at head of list 
     if (part->lastZone == NULL)
     {
-	/* Give first zone a zoneId of 1 */
+	 Give first zone a zoneId of 1 
 	zone->zoneId = 1;
 
-	/* First and last zone */
+	// First and last zone 
 	part->firstZone = zone;
 	part->lastZone = zone;
 
     }
     
-    /* Otherwise, put after last zone */
+    // Otherwise, put after last zone 
     else 
     {
-	/* Give this zone the last Zone's id + 1 */
+	// Give this zone the last Zone's id + 1 
 	zone->zoneId = part->lastZone->zoneId + 1;
 	
 	part->lastZone->nextZone = zone;
 	part->lastZone = zone;
     }
 
-    /* Always placed at end */
+    // Always placed at end 
     zone->nextZone = NULL;
     
-    /* Inialized the rest of the zone fields */
+    // Inialized the rest of the zone fields 
     zone->partId = part->partId;
     zone->value = 0.0;
+} */
+
+// PORT - aifm addZone 
+
+void addZone (UniquePtr<Part> *part, UniquePtr<Zone> *zone)
+{
+
+    // TODO - Sanity check(NULL check) is still remaining 
+    memset (zone, 0xFF, CLOMP_zoneSize);
+
+    //cout<<"test if it enters...........";
+
+    //cout<< typeid(part).name();
+//#if 0
+    {
+        DerefScope scope;
+        auto part_val = part->deref_mut(scope); // is this working? 
+        auto zone_val = zone->deref_mut(scope);     // same scope for both zone and part 
+        if (part_val->lastZone==NULL)
+        {
+            zone_val->zoneId = 1;
+            part_val->firstZone = zone;
+	        part_val->lastZone = zone;
+        }
+        else // TODO - zone dereferencing is stil incomplete; how to do for "lastZone->zoneId". Solved. Seems to be working, error gone  
+        {
+            /* Give this zone the last Zone's id + 1 */
+            auto lastzone_ref = part_val->lastZone->deref_mut(scope);
+            zone_val->zoneId = lastzone_ref->zoneId +1;
+            lastzone_ref->nextZone = zone;
+            part_val->lastZone = zone;
+            //zone_val->zoneId = part_val->lastZone->zoneId + 1;
+            //part_val->lastZone->nextZone = zone;
+            
+        }
+
+    }
+    
+//  #endif
 }
+
 
 
 /*
@@ -2131,7 +2246,9 @@ void _main (void *arg)
     char startdate[50];  /* Must be > 26 characters */
     long partId, zoneId;
     double totalZoneCount;
-    Zone *zone, *prev_zone;
+    //Zone *zone, *prev_zone;
+    UniquePtr<Zone> *zone; // PORT
+    UniquePtr<Zone> *prev_zone;
     double deposit, residue, percent_residue, part_deposit_bound;
     double deposit_diff_bound;
     double diterations;
@@ -2150,8 +2267,14 @@ void _main (void *arg)
     struct timeval dynamic_omp_start_ts, dynamic_omp_end_ts;
     double dynamic_omp_seconds;
     int bidx, aidx;
-    Part *sorted_part_list;
-    Part *part;
+    //Part *sorted_part_list;
+    //Part *part;
+    UniquePtr<Part> *sorted_part_list;  // PORT
+    UniquePtr<Part> *part;     
+    
+
+    //PORT 
+    //UniquePtr<Part> *part;  //as in clomp
 #ifdef WITH_MPI
     int provided, rc;
 #endif
@@ -2298,18 +2421,38 @@ FarMemManager *far_mem_manager = manager.get();
 
 
     /* Allocate part pointer array */
-    partArray = (Part **) malloc (CLOMP_numParts * sizeof (Part*));
-    if (partArray == NULL)
+    // PORT - initialize partArray with AIFM
+    auto partArray = manager->allocate_array<UniquePtr<Part>, CLOMP_numParts>();
+
+    // TODO - come back later to do the NULL checking
+    //partArray = (Part **) malloc (CLOMP_numParts * sizeof (Part*));
+    /*if (partArray == NULL)
     {
 	fprintf (stderr, "Out of memory allocating part array\n");
 	exit (1);
     }
 
-    /* Initialize poitner array to NULL initially */
+     Initialize poitner array to NULL initially 
     for (partId = 0; partId < CLOMP_numParts; partId++)
     {
 	partArray[partId] = NULL;
     }
+    */
+
+    // PORT - initialize partArray to NULL
+
+    for (partId = 0; partId < CLOMP_numParts; partId++)
+    {
+      DerefScope scope;
+
+      auto &pointer_loc = partArray.at_mut(scope,partId);
+      pointer_loc_ptr_part = &pointer_loc;
+      auto raw_pointer_loc = pointer_loc_ptr_part->deref_mut(scope);
+      raw_pointer_loc = NULL;
+    }
+
+
+    
 
 
     /* Calculate 1/numParts to prevent divides in algorithm */
@@ -2321,6 +2464,8 @@ FarMemManager *far_mem_manager = manager.get();
      * to allow potentially better memory layout for threads
      */
 //#pragma omp parallel for private(partId) schedule(static) 
+
+    /*
     for (partId = 0; partId < CLOMP_numParts; partId++)
     {
 	Part *part;
@@ -2330,71 +2475,85 @@ FarMemManager *far_mem_manager = manager.get();
 	    exit (1);
 	}
 
-	/* Call standard part initializer for part just allocated.
-	 * Allows parts to be allocated as desired.
-	 */
+	// Call standard part initializer for part just allocated.
+	// Allows parts to be allocated as desired.
+	//
 	addPart(part, partId);
     }
 
-//#pragma omp parallel for private(partId) schedule(static) 
-    /* Create and add zones to parts.
-     * Do allocations in thread (allocThreads may be set to 1 for allocate)
-     * to allow potentially better memory layout for threads
-     */
+    */
+
+    // PORT - addPart; TODO - NULL checking is remaining
     for (partId = 0; partId < CLOMP_numParts; partId++)
     {
-	//Zone *zoneArray, *zone;
-    int zoneId;
-
-
-    //PORT-- create a vector type of zone 
-    std::vector<zone*> zone;
-    auto vectorZoneArray = far_mem_manager->allocate_dataframe_vector<zone*>();
-
-	
-	//PORT-- populate the created vectorZoneArray?
-    for (int i =0; i<CLOMP_zonesPerPart; i++)
-    {
-        DerefScope scope;
-        struct _Zone* zone = new _Zone;
-        vectorZoneArray->push_back(scope,zone);
+	    //Part* part;
+        UniquePtr<Part> *part;
+	    
+        addPart(part, partId);
     }
 
-
-	// /* Allocate an array of zones for this part */
-	// zoneArray = (Zone *)malloc (CLOMP_zoneSize * CLOMP_zonesPerPart);
-	// if (zoneArray == NULL)
-	// {
-	//     fprintf (stderr, "Out of memory allocate zone array\n");
-	//     exit (1);
-	// }
+/*
+//#pragma omp parallel for private(partId) schedule(static) 
+    // Create and add zones to parts.
+    // Do allocations in thread (allocThreads may be set to 1 for allocate)
+    // to allow potentially better memory layout for threads
+     
+    for (partId = 0; partId < CLOMP_numParts; partId++)
+    {
+	Zone *zoneArray, *zone;
+	int zoneId;
 	
-
-    //PORT-- 
-    /* Put all zones into part's zone linked list */
+	// Allocate an array of zones for this part 
+	zoneArray = (Zone *)malloc (CLOMP_zoneSize * CLOMP_zonesPerPart);
+	if (zoneArray == NULL)
+	{
+	    fprintf (stderr, "Out of memory allocate zone array\n");
+	    exit (1);
+	}
+	
+	// Put all zones into part's zone linked list 
 	for (zoneId = 0; zoneId < CLOMP_zonesPerPart; zoneId++)
 	{
-	    /* Get the current zone being placed */
-	    //zone = &vectorZoneArray[zoneId];
-        DerefScope scope;
-	    Zone *zone = vectorZoneArray->at(scope,zoneId)
-
-	    /* Add it to the end of the the part */
-	    addZone (partArray[partId], zone);
-	}
-
-
-
-	// /* Put all zones into part's zone linked list */
-	// for (zoneId = 0; zoneId < CLOMP_zonesPerPart; zoneId++)
-	// {
-	//     /* Get the current zone being placed */
-	//     zone = &zoneArray[zoneId];
+	    // Get the current zone being placed 
+	    zone = &zoneArray[zoneId];
 	    
-	//     /* Add it to the end of the the part */
-	//     addZone (partArray[partId], zone);
-	// }
-	
+	    // Add it to the end of the the part 
+	    addZone (partArray[partId], zone);
+	} */
+
+    for (partId = 0; partId < CLOMP_numParts; partId++)
+    {
+	    far_memory::Array<UniquePtr<Part>> *ZoneArray;
+        //far_memory::Array<UniquePtr<Part>> *Zone;
+        //Zone *zoneArray, *zone;
+        //Zone *zone;
+
+        auto zoneArray = manager->allocate_array<UniquePtr<Zone>, CLOMP_zonesPerPart>();
+
+        for (zoneId = 0; zoneId < CLOMP_zonesPerPart; zoneId++)
+	    {   
+            {
+                /* Get the current zone being placed */
+                DerefScope scope;
+	            auto &pointer_loc = &zoneArray.at_mut(scope,zoneId);
+                pointer_loc_zone = &pointer_loc;
+            
+            }
+	        /* Add it to the end of the the part */
+
+            {
+                DerefScope scope;
+	            auto &pointer_loc = partArray.at_mut(scope,partId);
+                pointer_loc_ptr_part = &pointer_loc;
+                
+            }
+
+            addZone (pointer_loc_ptr_part, pointer_loc_zone);
+
+        }
+
+
+
 #if 0
 	/* Print out memory address for zoneArray to see where it maps */
 	printf ("Part %i threadId %i: zones %p - %p\n", (int)partId,
