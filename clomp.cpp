@@ -429,36 +429,53 @@ void update_part (UniquePtr<Part> *part, double incoming_deposit)
     }
 }
 
+// PORT reinitialize_parts
+
 /* Resets parts to initial state and warms up cache */
 void reinitialize_parts()
 {
     long pidx;
-    Zone *zone;
-    
+    //Zone *zone;
+    UniquePtr<Zone> *zone;
+        
     /* Reset all the zone values to 0.0 and the part residue to 0.0 */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-	for (zone = partArray[pidx]->firstZone; 
-	     zone != NULL; 
-	     zone = zone->nextZone)
-	{
-	    /* Reset zone's value to 0 */
-	    zone->value = 0.0;
-	}
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        auto partArray_pidx = pointer_loc_ptr_part->deref_mut(scope);
+        
+        auto zone_val = zone->deref_mut(scope);
 
-	/* Reset residue */
-	partArray[pidx]->residue = 0.0;
+        for (zone = partArray_pidx->firstZone; 
+            zone != NULL; 
+            zone = zone_val->nextZone)
+        {
+            /* Reset zone's value to 0 */
+            zone_val->value = 0.0;
+        }
 
-	/* Reset update count */
-	partArray[pidx]->update_count = 0;
+        /* Reset residue */
+        partArray_pidx->residue = 0.0;
+
+        /* Reset update count */
+        partArray_pidx->update_count = 0;
     }
 
     /* Scan through zones and add zero to each zone to warm up cache*/
     /* Also sets each zone update_count to 1, which sanity check wants */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-	update_part (partArray[pidx], 0.0);
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        //auto partArray_pidx = pointer_loc_ptr_part->deref_mut(scope);
+
+        update_part (pointer_loc_ptr_part, 0.0);
     }
+
+    
 }
 
 /* Helper routine to print out timestamp when test starting */
