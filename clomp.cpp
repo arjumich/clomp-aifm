@@ -2195,10 +2195,13 @@ void addZone (UniquePtr<Part> *part, UniquePtr<Zone> *zone)
 {
 
     // TODO - Sanity check(NULL check) is still remaining 
-    memset (zone, 0xFF, CLOMP_zoneSize);
-
+    {
+        DerefScope scope;
+        auto zone_val = zone->deref_mut(scope);
+        memset (zone_val, 0xFF, CLOMP_zoneSize);
+    }
+    //memset (zone, 0xFF, CLOMP_zoneSize);
     //cout<<"test if it enters...........";
-
     //cout<< typeid(part).name();
 //#if 0
     {
