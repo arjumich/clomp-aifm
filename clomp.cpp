@@ -475,7 +475,6 @@ void reinitialize_parts()
         update_part (pointer_loc_ptr_part, 0.0);
     }
 
-    
 }
 
 /* Helper routine to print out timestamp when test starting */
@@ -790,6 +789,9 @@ void print_data_stats (const char *desc)
  * 
  * Cannot be moved past subcycle loops without getting wrong answer.
  */
+
+// PORT
+
 double calc_deposit ()
 {
     double residue, deposit;
@@ -799,19 +801,25 @@ double calc_deposit ()
      * This code cannot be pulled out of loops or above loops!
      * Only check/update part 0 (other counts will just continue and may wrap)
      */
-    if (partArray[0]->update_count != 1)
+
+    DerefScope scope;
+    auto &pointer_loc = partArray->at_mut(scope,0);
+    pointer_loc_ptr_part = &pointer_loc;
+    auto partArray_0 = pointer_loc_ptr_part->deref_mut(scope);
+
+    if (partArray_0->update_count != 1)
     {
-	fprintf (stderr, "Error in calc_deposit: Part updated %i times since last call!\n",
-		 (int) partArray[0]->update_count);
-	fprintf (stderr, "Benchmark designed to have calc_deposit called exactly once per update!\n");
-	fprintf (stderr, "Critical error: Exiting...\n");
-	exit (1);
+        fprintf (stderr, "Error in calc_deposit: Part updated %i times since last call!\n",
+            (int) partArray_0->update_count);
+        fprintf (stderr, "Benchmark designed to have calc_deposit called exactly once per update!\n");
+        fprintf (stderr, "Critical error: Exiting...\n");
+        exit (1);
     }
 
     /* Mark that we are using the updated info, so we can detect if this
      * code has been moved illegally.
      */
-    partArray[0]->update_count = 0;
+    partArray_0->update_count = 0;
 
     /* Calculate residue from previous subcycle (normally this is done
      * with an MPI data exchange to other domains, but emulate here).
@@ -833,7 +841,7 @@ double calc_deposit ()
      * be used from calculation to prevent undesired optimizations.
      * Hopefully using part 0's data will be enough -JCG 17Dec2013
      */
-    residue = partArray[0]->residue * CLOMP_residue_ratio_part0;
+    residue = partArray_0->residue * CLOMP_residue_ratio_part0;
 
     /* Calculate deposit for this subcycle based on residue and part ratio */
     deposit = (1.0 + residue) * CLOMP_partRatio;
@@ -858,13 +866,23 @@ void do_calc_deposit_only()
 	/* 10 subcycles to every iteration, calc_deposit call in each one */
 	for (subcycle = 0; subcycle < 10; subcycle++)
 	{
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,0);
+        pointer_loc_ptr_part = &pointer_loc;
+        auto partArray_0 = pointer_loc_ptr_part->deref_mut(scope);
+
 	    /* Fool calc_deposit sanity checks for this timing measurement */
-	    partArray[0]->update_count = 1;
+        
+        //partArray[0]->update_count = 1;
+	    partArray_0->update_count = 1;
 	    
 	    /* Calc value, write into first zone's value, in order
 	     * to prevent compiler optimizing away
 	     */
-	    partArray[0]->firstZone->value = calc_deposit();
+
+	    //partArray[0]->firstZone->value = calc_deposit();
+        auto firstZone_loc = partArray_0->firstZone->deref_mut(scope);
+        firstZone_loc->value = calc_deposit();
 	}
     }
 }
