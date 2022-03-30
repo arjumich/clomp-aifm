@@ -344,74 +344,89 @@ long convert_to_positive_long (const char *parm_name, const char *parm_val)
     return (val);
 }
 
-void update_part (Part *part, double incoming_deposit)
+// PORT update_part
+
+void update_part (UniquePtr<Part> *part, double incoming_deposit)
 {
-    Zone *zone;
+    //Zone *zone;
+    UniquePtr<Zone> *zone; // PORT
     double deposit_ratio, remaining_deposit, deposit;
     long scale_count;
 
     /* Update count of updates for this part (for error checking)
      * Just part 0's count will be zeroed regularly.   Others may wrap.
      */
-    part->update_count++;
-
-    /* Get the deposit_ratio from part*/
-    deposit_ratio = part->deposit_ratio;
-
-    /* Initially, the remaining_deposit is the incoming deposit */
-    remaining_deposit = incoming_deposit;
-
-    /* If have the most common case (original case) where CLOMP_flopScale = 1, 
-     * use a specialized loop to get best performance for this important case.
-     * (Since the faster the loop, the more OpenMP overhead matters.)
-     */
-    if (CLOMP_flopScale == 1)
+    
     {
-	/* Run through each zone, depositing 'deposit_ratio' part of the 
-	 * remaining_deposit in the zone and carrying the rest to the remaining
-	 * zones
-	 */
-	for (zone = part->firstZone; zone != NULL; zone = zone->nextZone)
-	{
-	    /* Calculate the deposit for this zone */
-	    deposit = remaining_deposit * deposit_ratio;
-	    
-	    /* Add deposit to the zone's value */
-	    zone->value += deposit;
-		
-	    /* Remove deposit from the remaining_deposit */
-	    remaining_deposit -= deposit;
-	}
-    }
+        DerefScope scope;
+        auto part_val = part->deref_mut(scope);
+        auto zone_val = zone->deref_mut(scope);
+        part_val->update_count++;
+        deposit_ratio = part_val->deposit_ratio;
+    
+    
+        //part->update_count++;
 
-    /* Otherwise, if CLOMP_flopScale != 1, use inner loop version */
-    else
-    {
-	/* Run through each zone, depositing 'deposit_ratio' part of the 
-	 * remaining_deposit in the zone and carrying the rest to the remaining
-	 * zones
-	 */
-	for (zone = part->firstZone; zone != NULL; zone = zone->nextZone)
-	{
-	    /* Allow scaling of the flops per double loaded, so that you
-	     * can get expensive iterations without blowing the cache.
-	     */
-	    for (scale_count = 0; scale_count < CLOMP_flopScale; scale_count++)
-	    {
-		/* Calculate the deposit for this zone */
-		deposit = remaining_deposit * deposit_ratio;
-		
-		/* Add deposit to the zone's value */
-		zone->value += deposit;
-		
-		/* Remove deposit from the remaining_deposit */
-		remaining_deposit -= deposit;
-	    }
-	}
-    }
+        /* Get the deposit_ratio from part*/
+        //deposit_ratio = part->deposit_ratio;
 
-    /* Put the left over deposit in the Part's residue field */
-    part->residue = remaining_deposit;
+        /* Initially, the remaining_deposit is the incoming deposit */
+        remaining_deposit = incoming_deposit;
+
+        /* If have the most common case (original case) where CLOMP_flopScale = 1, 
+        * use a specialized loop to get best performance for this important case.
+        * (Since the faster the loop, the more OpenMP overhead matters.)
+        */
+        if (CLOMP_flopScale == 1)
+        {
+            /* Run through each zone, depositing 'deposit_ratio' part of the 
+            * remaining_deposit in the zone and carrying the rest to the remaining
+            * zones
+            */
+            for (zone = part_val->firstZone; zone != NULL; zone = zone_val->nextZone)
+            {
+                /* Calculate the deposit for this zone */
+                deposit = remaining_deposit * deposit_ratio;
+                
+                /* Add deposit to the zone's value */
+                zone_val->value += deposit;
+                
+                /* Remove deposit from the remaining_deposit */
+                remaining_deposit -= deposit;
+            }
+        }
+        
+        
+
+        /* Otherwise, if CLOMP_flopScale != 1, use inner loop version */
+        else
+        {
+            /* Run through each zone, depositing 'deposit_ratio' part of the 
+            * remaining_deposit in the zone and carrying the rest to the remaining
+            * zones
+            */
+            for (zone = part_val->firstZone; zone != NULL; zone = zone_val->nextZone)
+            {
+                /* Allow scaling of the flops per double loaded, so that you
+                * can get expensive iterations without blowing the cache.
+                */
+                for (scale_count = 0; scale_count < CLOMP_flopScale; scale_count++)
+                {
+                /* Calculate the deposit for this zone */
+                deposit = remaining_deposit * deposit_ratio;
+                
+                /* Add deposit to the zone's value */
+                zone_val->value += deposit;
+                
+                /* Remove deposit from the remaining_deposit */
+                remaining_deposit -= deposit;
+                }
+            }
+        }
+
+        /* Put the left over deposit in the Part's residue field */
+        part_val->residue = remaining_deposit;
+    }
 }
 
 /* Resets parts to initial state and warms up cache */
