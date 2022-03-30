@@ -1,3 +1,11 @@
+Deploy
+------
+
+1. git clone into AIFM/
+2. cp shared.sh ../aifm/
+3. only build using ./build_only.sh
+
+
 CLOMP README (Updated for Version 1.2 23Dec2013)
 ------------------------------------------------
 
