@@ -872,7 +872,7 @@ void do_calc_deposit_only()
         auto partArray_0 = pointer_loc_ptr_part->deref_mut(scope);
 
 	    /* Fool calc_deposit sanity checks for this timing measurement */
-        
+
         //partArray[0]->update_count = 1;
 	    partArray_0->update_count = 1;
 	    
@@ -922,6 +922,8 @@ void do_omp_barrier_only(long num_iterations)
  * --------------------------------------------------------------------
  */
 
+// PORT
+
 /* Do module one's work serially (contains 1 subcycle) */
 void serial_ref_module1()
 {
@@ -935,8 +937,16 @@ void serial_ref_module1()
     
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        //update_part (partArray[pidx], deposit);
+        update_part (pointer_loc_ptr_part, deposit);
+    }
 }
+
+//PORT 
 
 /* Do module two's work serially (contains 2 subcycles) */
 void serial_ref_module2()
@@ -951,8 +961,14 @@ void serial_ref_module2()
     
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
 
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
     /* ---------------- SUBCYCLE 2 OF 2 ----------------- */
 
     /* Calculate deposit for this subcycle based on last subcycle's residue */
@@ -960,7 +976,13 @@ void serial_ref_module2()
     
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do module three's work serially (contains 3 subcycles) */
@@ -976,7 +998,13 @@ void serial_ref_module3()
     
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 3 ----------------- */
 
@@ -985,7 +1013,13 @@ void serial_ref_module3()
     
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 3 OF 3 ----------------- */
 
@@ -994,7 +1028,13 @@ void serial_ref_module3()
     
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do module four's work serially (contains 4 subcycles) */
@@ -1010,7 +1050,13 @@ void serial_ref_module4()
     
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 4 ----------------- */
 
@@ -1019,7 +1065,13 @@ void serial_ref_module4()
     
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 3 OF 4 ----------------- */
 
@@ -1028,7 +1080,13 @@ void serial_ref_module4()
     
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 4 OF 4 ----------------- */
 
@@ -1037,7 +1095,13 @@ void serial_ref_module4()
     
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 
@@ -1083,7 +1147,13 @@ void static_omp_module1()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do module two's work using "omp parallel for schedule(static)"
@@ -1102,7 +1172,13 @@ void static_omp_module2()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 2 ----------------- */
 
@@ -1112,7 +1188,13 @@ void static_omp_module2()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do module three's work using "omp parallel for schedule(static)"
@@ -1131,7 +1213,13 @@ void static_omp_module3()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 3 ----------------- */
 
@@ -1141,7 +1229,13 @@ void static_omp_module3()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 3 OF 3 ----------------- */
 
@@ -1151,7 +1245,13 @@ void static_omp_module3()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do module four's work using "omp parallel for schedule(static)"
@@ -1170,7 +1270,13 @@ void static_omp_module4()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 4 ----------------- */
 
@@ -1180,7 +1286,13 @@ void static_omp_module4()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 3 OF 4 ----------------- */
 
@@ -1190,7 +1302,13 @@ void static_omp_module4()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 4 OF 4 ----------------- */
 
@@ -1200,7 +1318,13 @@ void static_omp_module4()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do one cycle (10 subcycles) using "omp parallel for schedule(static)" */
@@ -1251,7 +1375,13 @@ void dynamic_omp_module1()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do module two's work using "omp parallel for schedule(dynamic)"
@@ -1270,7 +1400,13 @@ void dynamic_omp_module2()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 2 ----------------- */
 
@@ -1280,7 +1416,13 @@ void dynamic_omp_module2()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do module three's work using "omp parallel for schedule(dynamic)"
@@ -1299,7 +1441,13 @@ void dynamic_omp_module3()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 3 ----------------- */
 
@@ -1309,7 +1457,13 @@ void dynamic_omp_module3()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 3 OF 3 ----------------- */
 
@@ -1319,7 +1473,13 @@ void dynamic_omp_module3()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do module four's work using "omp parallel for schedule(dynamic)"
@@ -1338,7 +1498,13 @@ void dynamic_omp_module4()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 4 ----------------- */
 
@@ -1348,7 +1514,13 @@ void dynamic_omp_module4()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 3 OF 4 ----------------- */
 
@@ -1358,7 +1530,13 @@ void dynamic_omp_module4()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 4 OF 4 ----------------- */
 
@@ -1368,7 +1546,13 @@ void dynamic_omp_module4()
     /* Scan through zones and add appropriate deposit to each zone */
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 
@@ -1410,7 +1594,8 @@ void manual_omp_module1(int startPidx, int endPidx)
 {
     static double deposit;   /* Must be static! */
     long pidx;
-    Part *part;
+    //Part *part;
+    UniquePtr<Part> *part;  // TODO - since it's left unused, do we need it here? goes for all other blocks 
 
     /* ---------------- SUBCYCLE 1 OF 1 ----------------- */
 /* Barrier required to make sure all threads are finished with their portion
@@ -1438,7 +1623,13 @@ void manual_omp_module1(int startPidx, int endPidx)
      * calling this loop and doing manual work sharing).
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do module two's work using manual thread management (contains 2 subcycles) 
@@ -1447,7 +1638,8 @@ void manual_omp_module2(int startPidx, int endPidx)
 {
     static double deposit;   /* Must be static! */
     long pidx;
-    Part *part;
+    //Part *part;
+    UniquePtr<Part> *part;
 
     /* ---------------- SUBCYCLE 1 OF 2 ----------------- */
 
@@ -1476,7 +1668,13 @@ void manual_omp_module2(int startPidx, int endPidx)
      * calling this loop and doing manual work sharing).
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
 
     /* ---------------- SUBCYCLE 2 OF 2 ----------------- */
@@ -1506,7 +1704,13 @@ void manual_omp_module2(int startPidx, int endPidx)
      * calling this loop and doing manual work sharing).
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
 }
 
@@ -1516,7 +1720,8 @@ void manual_omp_module3(int startPidx, int endPidx)
 {
     static double deposit;   /* Must be static! */
     long pidx;
-    Part *part;
+    //Part *part;
+    UniquePtr<Part> *part;
 
     /* ---------------- SUBCYCLE 1 OF 3 ----------------- */
 
@@ -1545,7 +1750,13 @@ void manual_omp_module3(int startPidx, int endPidx)
      * calling this loop and doing manual work sharing).
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 3 ----------------- */
 
@@ -1574,7 +1785,13 @@ void manual_omp_module3(int startPidx, int endPidx)
      * calling this loop and doing manual work sharing).
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 3 OF 3 ----------------- */
 
@@ -1603,7 +1820,13 @@ void manual_omp_module3(int startPidx, int endPidx)
      * calling this loop and doing manual work sharing).
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do module four's work using manual thread management (contains 4 subcycles)
@@ -1612,7 +1835,8 @@ void manual_omp_module4(int startPidx, int endPidx)
 {
     static double deposit;   /* Must be static! */
     long pidx;
-    Part *part;
+    //Part *part;
+    UniquePtr<Part> *part;
 
     /* ---------------- SUBCYCLE 1 OF 4 ----------------- */
 
@@ -1641,7 +1865,13 @@ void manual_omp_module4(int startPidx, int endPidx)
      * calling this loop and doing manual work sharing).
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 4 ----------------- */
 
@@ -1670,7 +1900,13 @@ void manual_omp_module4(int startPidx, int endPidx)
      * calling this loop and doing manual work sharing).
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
 
     /* ---------------- SUBCYCLE 3 OF 4 ----------------- */
@@ -1700,7 +1936,13 @@ void manual_omp_module4(int startPidx, int endPidx)
      * calling this loop and doing manual work sharing).
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
 
     /* ---------------- SUBCYCLE 4 OF 4 ----------------- */
@@ -1730,7 +1972,13 @@ void manual_omp_module4(int startPidx, int endPidx)
      * calling this loop and doing manual work sharing).
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
 }
 
@@ -1826,7 +2074,13 @@ void bestcase_omp_module1(int startPidx, int endPidx, double deposit)
      * and not trip the threading sanity checks in calc_deposit().
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do bestcase variation (doesn't give correct answers)
@@ -1847,7 +2101,13 @@ void bestcase_omp_module2(int startPidx, int endPidx, double deposit)
      * and not trip the threading sanity checks in calc_deposit().
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 2 ----------------- */
     /* Do bestcase variation.   Leaves out all omp barriers and omp singles
@@ -1859,7 +2119,13 @@ void bestcase_omp_module2(int startPidx, int endPidx, double deposit)
      * and not trip the threading sanity checks in calc_deposit().
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do bestcase variation (doesn't give correct answers)
@@ -1879,7 +2145,13 @@ void bestcase_omp_module3(int startPidx, int endPidx, double deposit)
      * and not trip the threading sanity checks in calc_deposit().
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 3 ----------------- */
     /* Do bestcase variation.   Leaves out all omp barriers and omp singles
@@ -1891,7 +2163,13 @@ void bestcase_omp_module3(int startPidx, int endPidx, double deposit)
      * and not trip the threading sanity checks in calc_deposit().
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 3 OF 3 ----------------- */
     /* Do bestcase variation.   Leaves out all omp barriers and omp singles
@@ -1903,7 +2181,13 @@ void bestcase_omp_module3(int startPidx, int endPidx, double deposit)
      * and not trip the threading sanity checks in calc_deposit().
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	    update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do bestcase variation (doesn't give correct answers)
@@ -1923,7 +2207,13 @@ void bestcase_omp_module4(int startPidx, int endPidx, double deposit)
      * and not trip the threading sanity checks in calc_deposit().
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 2 OF 4 ----------------- */
     /* Do bestcase variation.   Leaves out all omp barriers and omp singles
@@ -1935,7 +2225,13 @@ void bestcase_omp_module4(int startPidx, int endPidx, double deposit)
      * and not trip the threading sanity checks in calc_deposit().
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 3 OF 4 ----------------- */
     /* Do bestcase variation.   Leaves out all omp barriers and omp singles
@@ -1947,7 +2243,13 @@ void bestcase_omp_module4(int startPidx, int endPidx, double deposit)
      * and not trip the threading sanity checks in calc_deposit().
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 
     /* ---------------- SUBCYCLE 4 OF 4 ----------------- */
     /* Do bestcase variation.   Leaves out all omp barriers and omp singles
@@ -1959,7 +2261,13 @@ void bestcase_omp_module4(int startPidx, int endPidx, double deposit)
      * and not trip the threading sanity checks in calc_deposit().
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
-	update_part (partArray[pidx], deposit);
+    {
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        update_part (pointer_loc_ptr_part, deposit);
+        //update_part (partArray[pidx], deposit);
+    }
 }
 
 /* Do one cycle (10 subcycles) using bestcase variation 
