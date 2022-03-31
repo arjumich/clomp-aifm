@@ -2273,6 +2273,9 @@ void bestcase_omp_module4(int startPidx, int endPidx, double deposit)
 /* Do one cycle (10 subcycles) using bestcase variation 
  * (doesn't give correct answers)
  */
+
+// PORT - bestcase_omp_cycle
+
 void bestcase_omp_cycle(int startPidx, int endPidx, double deposit)
 {
     /* Emulate calls to 4 different packages, do 10 subcycles total */
@@ -2351,17 +2354,27 @@ void do_bestcase_omp_version(long num_iterations)
      */
     for (iter = 0; iter < num_iterations; iter ++)
     {
-	/* 10 subcycles to every iteration,  calc_deposit call in each one */
-	for (subcycle = 0; subcycle < 10; subcycle++)
-	{
-	    /* Fool calc_deposit sanity checks for this timing measurement */
-	    partArray[0]->update_count = 1;
-	    
-	    /* Calc value, write into first zone's value, in order
-	     * to prevent compiler optimizing away
-	     */
-	    partArray[0]->firstZone->value = calc_deposit();
-	}
+        /* 10 subcycles to every iteration,  calc_deposit call in each one */
+        for (subcycle = 0; subcycle < 10; subcycle++)
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,0);
+            pointer_loc_ptr_part = &pointer_loc;
+            auto partArray_0 = pointer_loc_ptr_part->deref_mut(scope);
+
+            /* Fool calc_deposit sanity checks for this timing measurement */
+
+            //partArray[0]->update_count = 1;
+            partArray_0->update_count = 1;
+            
+            /* Calc value, write into first zone's value, in order
+            * to prevent compiler optimizing away
+            */
+
+            //partArray[0]->firstZone->value = calc_deposit();
+            auto firstZone_loc = partArray_0->firstZone->deref_mut(scope);
+            firstZone_loc->value = calc_deposit();
+        }
     }
 }
 
