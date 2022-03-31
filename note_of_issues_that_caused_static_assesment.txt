@@ -1,0 +1,35 @@
+//note of issues that caused static_assert(sizeof...(Dims) == sizeof...(indices)) error 
+--------------------------------------------------------------------
+
+
+clomp.cpp:2334:16: warning: unused variable ‘far_mem_manager’ [-Wunused-variable]
+ 2334 | FarMemManager *far_mem_manager = manager.get();
+      |                ^~~~~~~~~~~~~~~
+In file included from ../../AIFM/aifm/inc/array.hpp:107,
+                 from ../../AIFM/aifm/inc/manager.hpp:5,
+                 from ../../AIFM/aifm/inc/internal/aggregator.ipp:5,
+                 from ../../AIFM/aifm/inc/aggregator.hpp:65,
+                 from ../../AIFM/aifm/inc/internal/dataframe_vector.ipp:3,
+                 from ../../AIFM/aifm/inc/dataframe_vector.hpp:314,
+                 from clomp.cpp:113:
+../../AIFM/aifm/inc/internal/array.ipp: In instantiation of ‘static constexpr int64_t fa_memory::Array<T, Dims>::get_flat_idx(Indices ...) [with Indices = {long int}; T = far_mmory::UniquePtr<_Part>; long unsigned int ...Dims = {}; int64_t = long int]’:
+../../AIFM/aifm/inc/internal/array.ipp:120:26:   required from ‘T& far_memory::Array<T, ims>::at_mut(const far_memory::DerefScope&, Indices ...) [with bool Nt = false; Indices  {long int}; T = far_memory::UniquePtr<_Part>; long unsigned int ...Dims = {}]’
+clomp.cpp:445:57:   required from here
+../../AIFM/aifm/inc/internal/array.ipp:68:33: error: static assertion failed
+   68 |   static_assert(sizeof...(Dims) == sizeof...(indices));
+
+
+
+1. incorrect data types; declare as uint64_t
+2. in global declaration of partArray 
+    far_memory::Array<UniquePtr<Part>, CLOMP_numParts> *partArray;
+
+3. pass the local declaration in reference after using auto 
+auto partArray1 = manager->allocate_array<UniquePtr<Part>, CLOMP_numParts>(); //last working copy
+partArray = &partArray1;
+
+
+
+//Issue with no matching template found 
+
+//declare the CLOMP sizes in code instead of passsing them as parameters. 

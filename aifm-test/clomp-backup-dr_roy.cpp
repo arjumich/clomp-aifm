@@ -132,15 +132,12 @@ int argc;
 /* Command line parameters, see usage info (initially -1 for sanity check)*/
 long CLOMP_numThreads = -2;       /* > 0 or -1 valid */
 long CLOMP_allocThreads = -2;     /* > 0 or -1 valid */
-constexpr unsigned long CLOMP_numParts = 1;         /* > 0 valid */
-constexpr unsigned long CLOMP_zonesPerPart = 300;     /* > 0 valid */
+constexpr unsigned long CLOMP_numParts = 10;         /* > 0 valid */
+long CLOMP_zonesPerPart = -1;     /* > 0 valid */
 long CLOMP_flopScale = -1;        /* > 0 valid, 1 nominal */
 long CLOMP_timeScale = -1;        /* > 0 valid, 100 nominal */
 long CLOMP_zoneSize = -1;         /* > 0 valid, (sizeof(Zone) true min)*/
 char *CLOMP_exe_name = NULL;      /* Points to argv[0] */
-
-
-//constexpr uint64_t CLOMP_numParts = 10;
 
 
 /* Save actual argument for summary at end */
@@ -177,7 +174,7 @@ typedef struct _Part
 //Part **partArray = NULL;
 
 // PORT - global declare partArray
-far_memory::Array<UniquePtr<Part>, CLOMP_numParts> *partArray;
+far_memory::Array<UniquePtr<Part>> *partArray;
 UniquePtr<Part> *pointer_loc_ptr_part;
 UniquePtr<Zone> *pointer_loc_zone;
 
@@ -437,7 +434,7 @@ void update_part (UniquePtr<Part> *part, double incoming_deposit)
 /* Resets parts to initial state and warms up cache */
 void reinitialize_parts()
 {
-    uint64_t pidx;
+    long pidx;
     //Zone *zone;
     UniquePtr<Zone> *zone;
         
@@ -637,7 +634,7 @@ double print_timestats (const char *desc, struct timeval *start_ts,
 void print_data_stats (const char *desc)
 {
     double value_sum, residue_sum, last_value, dtotal;
-    uint64_t pidx;
+    long pidx;
     //Zone *zone;
     UniquePtr<Zone> *zone;
     int is_reference, error_count;
@@ -812,7 +809,7 @@ void print_data_stats (const char *desc)
 double calc_deposit ()
 {
     double residue, deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* Sanity check, make sure residues have be updated since last calculation
      * This code cannot be pulled out of loops or above loops!
@@ -945,7 +942,7 @@ void do_omp_barrier_only(long num_iterations)
 void serial_ref_module1()
 {
     double deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 1 ----------------- */
 
@@ -969,7 +966,7 @@ void serial_ref_module1()
 void serial_ref_module2()
 {
     double deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 2 ----------------- */
 
@@ -1006,7 +1003,7 @@ void serial_ref_module2()
 void serial_ref_module3()
 {
     double deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 3 ----------------- */
 
@@ -1058,7 +1055,7 @@ void serial_ref_module3()
 void serial_ref_module4()
 {
     double deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 4 ----------------- */
 
@@ -1154,7 +1151,7 @@ void do_serial_ref_version()
 void static_omp_module1()
 {
     double deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 1 ----------------- */
 
@@ -1179,7 +1176,7 @@ void static_omp_module1()
 void static_omp_module2()
 {
     double deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 2 ----------------- */
 
@@ -1220,7 +1217,7 @@ void static_omp_module2()
 void static_omp_module3()
 {
     double deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 3 ----------------- */
 
@@ -1277,7 +1274,7 @@ void static_omp_module3()
 void static_omp_module4()
 {
     double deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 4 ----------------- */
 
@@ -1382,7 +1379,7 @@ void do_static_omp_version()
 void dynamic_omp_module1()
 {
     double deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 1 ----------------- */
 
@@ -1407,7 +1404,7 @@ void dynamic_omp_module1()
 void dynamic_omp_module2()
 {
     double deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 2 ----------------- */
 
@@ -1448,7 +1445,7 @@ void dynamic_omp_module2()
 void dynamic_omp_module3()
 {
     double deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 3 ----------------- */
 
@@ -1505,7 +1502,7 @@ void dynamic_omp_module3()
 void dynamic_omp_module4()
 {
     double deposit;
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 4 ----------------- */
 
@@ -1610,7 +1607,7 @@ void do_dynamic_omp_version()
 void manual_omp_module1(int startPidx, int endPidx)
 {
     static double deposit;   /* Must be static! */
-    uint64_t pidx;
+    long pidx;
     //Part *part;
     UniquePtr<Part> *part;  // TODO - since it's left unused, do we need it here? goes for all other blocks 
 
@@ -1654,7 +1651,7 @@ void manual_omp_module1(int startPidx, int endPidx)
 void manual_omp_module2(int startPidx, int endPidx)
 {
     static double deposit;   /* Must be static! */
-    uint64_t pidx;
+    long pidx;
     //Part *part;
     UniquePtr<Part> *part;
 
@@ -1736,7 +1733,7 @@ void manual_omp_module2(int startPidx, int endPidx)
 void manual_omp_module3(int startPidx, int endPidx)
 {
     static double deposit;   /* Must be static! */
-    uint64_t pidx;
+    long pidx;
     //Part *part;
     UniquePtr<Part> *part;
 
@@ -1851,7 +1848,7 @@ void manual_omp_module3(int startPidx, int endPidx)
 void manual_omp_module4(int startPidx, int endPidx)
 {
     static double deposit;   /* Must be static! */
-    uint64_t pidx;
+    long pidx;
     //Part *part;
     UniquePtr<Part> *part;
 
@@ -2079,7 +2076,7 @@ void do_manual_omp_version(long num_iterations)
  */
 void bestcase_omp_module1(int startPidx, int endPidx, double deposit)
 {
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 1 ----------------- */
     /* Do bestcase variation.   Leaves out all omp barriers and omp singles
@@ -2105,7 +2102,7 @@ void bestcase_omp_module1(int startPidx, int endPidx, double deposit)
  */
 void bestcase_omp_module2(int startPidx, int endPidx, double deposit)
 {
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 2 ----------------- */
 
@@ -2150,7 +2147,7 @@ void bestcase_omp_module2(int startPidx, int endPidx, double deposit)
  */
 void bestcase_omp_module3(int startPidx, int endPidx, double deposit)
 {
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 3 ----------------- */
     /* Do bestcase variation.   Leaves out all omp barriers and omp singles
@@ -2212,7 +2209,7 @@ void bestcase_omp_module3(int startPidx, int endPidx, double deposit)
  */
 void bestcase_omp_module4(int startPidx, int endPidx, double deposit)
 {
-    uint64_t pidx;
+    long pidx;
 
     /* ---------------- SUBCYCLE 1 OF 4 ----------------- */
     /* Do bestcase variation.   Leaves out all omp barriers and omp singles
@@ -2726,7 +2723,7 @@ FarMemManager *far_mem_manager = manager.get();
     CLOMP_allocThreads = convert_to_positive_long ("numThreads", argv[2]);
     //CLOMP_numParts = convert_to_positive_long ("numParts", argv[3]);
     //CLOMP_numParts = 10;
-    //CLOMP_zonesPerPart = convert_to_positive_long ("zonesPerPart", argv[4]);
+    CLOMP_zonesPerPart = convert_to_positive_long ("zonesPerPart", argv[4]);
     CLOMP_zoneSize = convert_to_positive_long ("zoneSize", argv[5]);
     CLOMP_flopScale = convert_to_positive_long ("flopScale", argv[6]);
     CLOMP_timeScale = convert_to_positive_long ("timeScale", argv[7]);
@@ -2818,8 +2815,8 @@ FarMemManager *far_mem_manager = manager.get();
 
     /* Allocate part pointer array */
     // PORT - initialize partArray with AIFM
-    auto partArray1 = manager->allocate_array<UniquePtr<Part>, CLOMP_numParts>();
-    partArray = &partArray1;
+    auto partArray = manager->allocate_array<UniquePtr<Part>, CLOMP_numParts>();
+
     // TODO - come back later to do the NULL checking
     //partArray = (Part **) malloc (CLOMP_numParts * sizeof (Part*));
     /*if (partArray == NULL)
@@ -2841,7 +2838,7 @@ FarMemManager *far_mem_manager = manager.get();
     {
       DerefScope scope;
 
-      auto &pointer_loc = partArray->at_mut(scope,partId);
+      auto &pointer_loc = partArray.at_mut(scope,partId);
       pointer_loc_ptr_part = &pointer_loc;
       auto raw_pointer_loc = pointer_loc_ptr_part->deref_mut(scope);
       raw_pointer_loc = NULL;
@@ -2919,19 +2916,19 @@ FarMemManager *far_mem_manager = manager.get();
 
     for (partId = 0; partId < CLOMP_numParts; partId++)
     {
-	    far_memory::Array<UniquePtr<Zone>, CLOMP_zonesPerPart> *ZoneArray;
+	    far_memory::Array<UniquePtr<Part>> *ZoneArray;
         //far_memory::Array<UniquePtr<Part>> *Zone;
         //Zone *zoneArray, *zone;
         //Zone *zone;
 
         auto zoneArray = manager->allocate_array<UniquePtr<Zone>, CLOMP_zonesPerPart>();
-        //zoneArray = &zoneArray1;
+
         for (zoneId = 0; zoneId < CLOMP_zonesPerPart; zoneId++)
 	    {   
             {
                 /* Get the current zone being placed */
                 DerefScope scope;
-	            auto &pointer_loc = zoneArray.at_mut(scope,zoneId);
+	            auto &pointer_loc = &zoneArray.at_mut(scope,zoneId);
                 pointer_loc_zone = &pointer_loc;
             
             }
@@ -2939,7 +2936,7 @@ FarMemManager *far_mem_manager = manager.get();
 
             {
                 DerefScope scope;
-	            auto &pointer_loc = partArray->at_mut(scope,partId);
+	            auto &pointer_loc = partArray.at_mut(scope,partId);
                 pointer_loc_ptr_part = &pointer_loc;
                 
             }
@@ -2979,9 +2976,9 @@ FarMemManager *far_mem_manager = manager.get();
     /* Sanity check for very small zone counts */
     if (diterations > 2000000000.0)
     {
-        printf ("*** Forcing iterations from (%g) to 2 billion\n",
-            diterations);
-        diterations = 2000000000.0;
+	printf ("*** Forcing iterations from (%g) to 2 billion\n",
+		diterations);
+	diterations = 2000000000.0;
     }
 
     /* Convert double iterations to int for use */
@@ -3008,58 +3005,52 @@ FarMemManager *far_mem_manager = manager.get();
     /* Scan through zones and add deposit to each zone */
     for (partId = 0; partId < CLOMP_numParts; partId++)
     {
+	/* Do serial calculation of percent residue */
+	update_part (partArray[partId], deposit);
+	percent_residue += partArray[partId]->residue;
 
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,partId);
-        pointer_loc_ptr_part = &pointer_loc;
-        auto partArray_id = pointer_loc_ptr_part->deref_mut(scope);
+	/* The 'next' deposit is smaller than any actual deposit made in
+	 * this part.  So it is a good lower bound on deposit size.
+	 */
+	part_deposit_bound = 
+	    partArray[partId]->residue * partArray[partId]->deposit_ratio;
 
-        /* Do serial calculation of percent residue */
-        update_part (pointer_loc_ptr_part, deposit);
-        percent_residue += partArray_id->residue;
+	/* If we use the smallest bound on any part, we should have the
+	 * biggest error bound that will not give false negatives on 
+	 * bad computation.
+	 */
+	if (CLOMP_error_bound > part_deposit_bound)
+	{
+#if 0
+	    printf ("After part %i bound from %g to %g (deposit %g)\n", (int)partId,
+		    CLOMP_error_bound, part_deposit_bound, partArray[partId]->deposit_ratio);
+#endif
+	    CLOMP_error_bound = part_deposit_bound;
+	}
+#if 0
+	else
+	{
+	    printf ("After part %i bound stayed %g because %g (deposit %g)\n", (int)partId,
+		    CLOMP_error_bound, part_deposit_bound, partArray[partId]->deposit_ratio);
+	}
+#endif
 
-        /* The 'next' deposit is smaller than any actual deposit made in
-        * this part.  So it is a good lower bound on deposit size.
-        */
-        part_deposit_bound = 
-            partArray_id->residue * partArray_id->deposit_ratio;
-
-        /* If we use the smallest bound on any part, we should have the
-        * biggest error bound that will not give false negatives on 
-        * bad computation.
-        */
-        if (CLOMP_error_bound > part_deposit_bound)
-        {
-    #if 0
-            printf ("After part %i bound from %g to %g (deposit %g)\n", (int)partId,
-                CLOMP_error_bound, part_deposit_bound, partArray_id->deposit_ratio);
-    #endif
-            CLOMP_error_bound = part_deposit_bound;
-        }
-    #if 0
-        else
-        {
-            printf ("After part %i bound stayed %g because %g (deposit %g)\n", (int)partId,
-                CLOMP_error_bound, part_deposit_bound, partArray_id->deposit_ratio);
-        }
-    #endif
-
-        deposit_diff_bound = part_deposit_bound * partArray_id->deposit_ratio;
-        if (CLOMP_tightest_error_bound > deposit_diff_bound)
-        {
-    #if 0
-            printf ("After part %i tightest bound from %g to %g (deposit %g)\n", (int)partId,
-                CLOMP_tightest_error_bound, deposit_diff_bound, partArray_id->deposit_ratio);
-    #endif
-            CLOMP_tightest_error_bound = deposit_diff_bound;
-        }
-    #if 0
-        else
-        {
-            printf ("After part %i tightest bound stayed %g because %g (deposit %g)\n", (int)partId,
-                CLOMP_tightest_error_bound, deposit_diff_bound, partArray_id->deposit_ratio);
-        }
-    #endif
+	deposit_diff_bound = part_deposit_bound * partArray[partId]->deposit_ratio;
+	if (CLOMP_tightest_error_bound > deposit_diff_bound)
+	{
+#if 0
+	    printf ("After part %i tightest bound from %g to %g (deposit %g)\n", (int)partId,
+		    CLOMP_tightest_error_bound, deposit_diff_bound, partArray[partId]->deposit_ratio);
+#endif
+	    CLOMP_tightest_error_bound = deposit_diff_bound;
+	}
+#if 0
+	else
+	{
+	    printf ("After part %i tightest bound stayed %g because %g (deposit %g)\n", (int)partId,
+		    CLOMP_tightest_error_bound, deposit_diff_bound, partArray[partId]->deposit_ratio);
+	}
+#endif
     }
     printf ("Iteration Residue: %.6f%%\n", percent_residue*100.0);
     printf ("  Max Error bound: %-8.8g\n", CLOMP_error_bound);
@@ -3084,18 +3075,7 @@ FarMemManager *far_mem_manager = manager.get();
      * Found part 0's residue is directly proportional to entire residue,
      * so calculate the ratio to get correct value. -JCG 17Dec2013
      */
-
-    {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,0);
-        pointer_loc_ptr_part = &pointer_loc;
-        auto partArray_0 = pointer_loc_ptr_part->deref_mut(scope);
-
-        CLOMP_residue_ratio_part0 = percent_residue/partArray_0->residue;
-
-    }
-    
-    
+    CLOMP_residue_ratio_part0 = percent_residue/partArray[0]->residue;
 
     /* Set the number of threads for the computation seciton to what user 
      * specified. Because we are using alloc threads also, have to explicitly
