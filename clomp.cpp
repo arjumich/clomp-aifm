@@ -635,7 +635,8 @@ void print_data_stats (const char *desc)
 {
     double value_sum, residue_sum, last_value, dtotal;
     long pidx;
-    Zone *zone;
+    //Zone *zone;
+    UniquePtr<Zone> *zone;
     int is_reference, error_count;
     
     /* Initialize value and residue sums to zero */
@@ -648,9 +649,9 @@ void print_data_stats (const char *desc)
      * calculations causing small differences.
      */
     if (strcmp (desc, "Serial Ref") == 0)
-	is_reference = 1;
+	    is_reference = 1;
     else
-	is_reference = 0;
+	    is_reference = 0;
     
     /* Initialize count of check errors */
     error_count = 0;
@@ -661,72 +662,76 @@ void print_data_stats (const char *desc)
      */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-	/* If have reference calculation, grab the first zone's value
-	 * and the part residue for comparison later
-	 */
-	if (is_reference)
-	{
-	    partArray[pidx]->expected_first_value = 
-		partArray[pidx]->firstZone->value;
-	    partArray[pidx]->expected_residue = partArray[pidx]->residue;
-	}
+        /* If have reference calculation, grab the first zone's value
+        * and the part residue for comparison later
+        */
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,pidx);
+        pointer_loc_ptr_part = &pointer_loc;
+        auto partArray_pidx = pointer_loc_ptr_part->deref_mut(scope);
+        auto firstZone_loc = partArray_pidx->firstZone->deref_mut(scope);
 
-	/* Otherwise, make sure this part matches the expected values
-	 * from the reference calculation.  Since using exactly the same
-	 * code to calculate these values (for all variations) and the
-	 * values are calculated in the same order (independent of number
-	 * of threads), I expect these values to be exactly the same.
-	 * If not true in the future, may have to put bounds on this.
-	 */
-	else
-	{
-	    /* Check that first zone's value is what is expected */
-	    if (partArray[pidx]->expected_first_value != 
-		partArray[pidx]->firstZone->value)
-	    {
-		error_count++;
-		fprintf (stderr, 
-			 "%s check failure: part %i first zone value (%g) != reference value (%g)!\n",
-			 desc, (int) pidx, partArray[pidx]->firstZone->value,
-			 partArray[pidx]->expected_first_value);
-	    }
-	    if (partArray[pidx]->expected_residue != partArray[pidx]->residue)
-	    {
-		error_count++;
-		fprintf (stderr, 
-			 "%s check failure: part %i residue (%g) != reference residue (%g)!\n",
-			 desc, (int) pidx, partArray[pidx]->residue,
-			 partArray[pidx]->expected_residue);
-	    }
-	}
+        auto zone_val = zone->deref_mut(scope);
 
-	/* Use first zone's value as initial last_value */
-	last_value = partArray[pidx]->firstZone->value;
+        if (is_reference)
+        {
+            partArray_pidx->expected_first_value = firstZone_loc->value;
+            partArray_pidx->expected_residue = partArray_pidx->residue;
+        }
 
-	/* Scan through zones checking that values decrease monotonically */
-	for (zone = partArray[pidx]->firstZone; 
-	     zone != NULL; 
-	     zone = zone->nextZone)
-	{
-	    if (zone->value > last_value)
-	    {
-		fprintf (stderr, 
-			 "*** %s check failure (part %i zone %i): "
-			 "previous (%g) < current (%g)!\n",
-			 desc, (int)zone->partId, 
-			 (int)zone->zoneId, last_value, zone->value);
-		error_count++;
+        /* Otherwise, make sure this part matches the expected values
+        * from the reference calculation.  Since using exactly the same
+        * code to calculate these values (for all variations) and the
+        * values are calculated in the same order (independent of number
+        * of threads), I expect these values to be exactly the same.
+        * If not true in the future, may have to put bounds on this.
+        */
+        else
+        {
+            /* Check that first zone's value is what is expected */
+            if (partArray_pidx->expected_first_value != firstZone_loc->value)
+            {
+                error_count++;
+                fprintf (stderr, 
+                    "%s check failure: part %i first zone value (%g) != reference value (%g)!\n",
+                    desc, (int) pidx, firstZone_loc->value,
+                    partArray_pidx->expected_first_value);
+            }
+            if (partArray_pidx->expected_residue != partArray_pidx->residue)
+            {
+                error_count++;
+                fprintf (stderr, 
+                    "%s check failure: part %i residue (%g) != reference residue (%g)!\n",
+                    desc, (int) pidx, partArray_pidx->residue,
+                    partArray_pidx->expected_residue);
+            }
 	    }
 
-	    /* Sum up values */
-	    value_sum += zone->value;
+        /* Use first zone's value as initial last_value */
+        last_value = firstZone_loc->value;
 
-	    /* This value now is last_value */
-	    last_value = zone->value;
-	}
+        /* Scan through zones checking that values decrease monotonically */
+        for (zone = partArray_pidx->firstZone; zone != NULL; zone = zone_val->nextZone)
+        {
+            if (zone_val->value > last_value)
+            {
+            fprintf (stderr, 
+                "*** %s check failure (part %i zone %i): "
+                "previous (%g) < current (%g)!\n",
+                desc, (int)zone_val->partId, 
+                (int)zone_val->zoneId, last_value, zone_val->value);
+            error_count++;
+            }
 
-	/* Sum up part residue's */
-	residue_sum += partArray[pidx]->residue;
+            /* Sum up values */
+            value_sum += zone_val->value;
+
+            /* This value now is last_value */
+            last_value = zone_val->value;
+        }
+
+        /* Sum up part residue's */
+        residue_sum += partArray_pidx->residue;
     }
     
     /* Calculate the total of value_sum + residue_sum.  This should
@@ -756,13 +761,22 @@ void print_data_stats (const char *desc)
     /* Make sure part 0's update count is exactly one.  This detects 
      * illegal optimization of calc_deposit().
      */
-    if (partArray[0]->update_count != 1)
+
     {
-	fprintf (stderr, "Error in calc_deposit: Part updated %i times since last calc_deposit!\n",
-		 (int) partArray[0]->update_count);
-	fprintf (stderr, "Benchmark designed to have calc_deposit called exactly once per update!\n");
-	fprintf (stderr, "Critical error: Exiting...\n");
-	exit (1);
+        DerefScope scope;
+        auto &pointer_loc = partArray->at_mut(scope,0);
+        pointer_loc_ptr_part = &pointer_loc;
+        auto partArray_0 = pointer_loc_ptr_part->deref_mut(scope);
+
+
+        if (partArray_0->update_count != 1)
+        {
+        fprintf (stderr, "Error in calc_deposit: Part updated %i times since last calc_deposit!\n",
+            (int) partArray_0->update_count);
+        fprintf (stderr, "Benchmark designed to have calc_deposit called exactly once per update!\n");
+        fprintf (stderr, "Critical error: Exiting...\n");
+        exit (1);
+        }
     }
     
     if (error_count > 0)
