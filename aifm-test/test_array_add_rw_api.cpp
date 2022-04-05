@@ -21,7 +21,8 @@ constexpr uint64_t kFarMemSize = (4ULL << 30);
 constexpr uint32_t kNumGCThreads = 12;
 constexpr uint32_t kNumEntries =
     (16ULL << 20); // So the array size is larger than the local cache size.
-
+constexpr uint64_t CLOMP_numParts = 2;
+constexpr uint64_t CLOMP_zonesPerPart = 10;
 /* Command line parameters, see usage info (initially -1 for sanity check)*/
 //long CLOMP_numThreads = -2;       /* > 0 or -1 valid */
 //long CLOMP_allocThreads = -2;     /* > 0 or -1 valid */
@@ -29,7 +30,7 @@ constexpr uint32_t kNumEntries =
 ////long CLOMP_zonesPerPart = -1;     /* > 0 valid */
 //long CLOMP_flopScale = -1;        /* > 0 valid, 1 nominal */
 //long CLOMP_timeScale = -1;        /* > 0 valid, 100 nominal */
-long CLOMP_zoneSize = -1;         /* > 0 valid, (sizeof(Zone) true min)*/
+uint64_t CLOMP_zoneSize = -1;         /* > 0 valid, (sizeof(Zone) true min)*/
 //char *CLOMP_exe_name = NULL;      /* Points to argv[0] */
 
 
@@ -37,26 +38,28 @@ long CLOMP_zoneSize = -1;         /* > 0 valid, (sizeof(Zone) true min)*/
 /* Simple Zone data structure */
 typedef struct _Zone
 {
-    long zoneId;
-    long partId;
-    double value;
-    struct _Zone *nextZone;
+    uint64_t zoneId;
+    uint64_t partId;
+    uint64_t value;
+    struct UniquePtr<_Zone> *nextZone;
 } Zone;
 
 
 /* Part data structure */
 typedef struct _Part
 {
-    long partId;
-    long zoneCount;
-    long update_count;  
-    Zone *firstZone;
-    Zone *lastZone;
-    double deposit_ratio;
-    double residue;
-    double expected_first_value; /* Used to check results */
-    double expected_residue;     /* Used to check results */
+    uint64_t partId;
+    uint64_t zoneCount;
+    uint64_t update_count;  
+    UniquePtr<Zone> *firstZone;
+    UniquePtr<Zone> *lastZone;
+    uint64_t deposit_ratio;
+    uint64_t residue;
+    uint64_t expected_first_value; /* Used to check results */
+    uint64_t expected_residue;     /* Used to check results */
 } Part;
+
+/* LL for gdb
 
 struct unique_ptr_part
 {
@@ -65,21 +68,36 @@ struct unique_ptr_part
 };
 
 using  unique_ptr_part_t = struct unique_ptr_part;
+*/
 
 /* Part array working on (now array of Part pointers)*/
 //Part **partArray = NULL;    //LL - What is it doing here? initializing the part double pointer 
                             // But how to modify this for aifm?
 
 
+far_memory::Array<UniquePtr<Part>, CLOMP_numParts> *partArray;
+//UniquePtr<Part> *partArray;
+UniquePtr<Part> *pointer_loc_ptr;
+UniquePtr<Zone> *pointer_loc_zone;
+
 //**addPart is not working with AIFM. Need to check again.
-void addPart (UniquePtr<Part> *part, long partId)
+
+
+void addPart (UniquePtr<Part> *part, uint64_t partId)
 {
+//#if 0
   {
     DerefScope scope;
-    auto &pointer_loc = partArray.at_mut(scope,partId);
+    auto &pointer_loc = partArray->at_mut(scope,partId);
     pointer_loc_ptr = &pointer_loc;
-    auto raw_pointer_loc = pointer_loc_ptr->deref_mut(scope);
-    raw_pointer_loc = part;
+    //auto raw_pointer_loc = pointer_loc_ptr->deref_mut(scope);
+    //raw_pointer_loc = part->deref_mut(scope); //causing segfault in this line 
+
+    pointer_loc_ptr = part;//->deref_mut(scope); //fixed segmentation fault here
+    //cout<< typeid(raw_pointer_loc).name();
+
+    //auto part_val = pointer_loc_ptr->deref_mut(scope);
+
 
     //   auto &pointer_loc = partArray.at_mut(scope,partId);
     //   pointer_loc_ptr = &pointer_loc;
@@ -87,11 +105,14 @@ void addPart (UniquePtr<Part> *part, long partId)
     //   raw_pointer_loc = NULL;
   }
 
-
+#if 0
   {
-
+    
     DerefScope scope;
     auto part_val = part->deref_mut(scope);
+    
+    part_val->partId = partId;
+    
 
     /* Put part pointer in array */
     //partArray.at_mut(scope,partId) = part;
@@ -101,39 +122,45 @@ void addPart (UniquePtr<Part> *part, long partId)
     //partArray[partId] = part_val;
 
     /* Set partId */
-    part_val->partId = partId;
+    
       
     /* Set zone count for part (now fixed, used to be variable */
     //part->zoneCount = CLOMP_zonesPerPart;
 
   }
-  
+#endif
 }
 
-void addZone (UniquePtr<Part> *part, Zone *zone)
+void addZone (UniquePtr<Part> *part, UniquePtr<Zone> *zone)
 {
-  memset (zone, 0xFF, CLOMP_zoneSize);
+  //memset (zone, 0xFF, CLOMP_zoneSize);
+  {
+        DerefScope scope;
+        auto zone_val = zone->deref_mut(scope);
+        memset (zone_val, 0xFF, CLOMP_zoneSize);  //segfault here; memset_avx2_unaligned_erms ()
+  }
 
   //cout<<"test if it enters...........";
 
   //cout<< typeid(part).name();
-//#if 0
   /* If not existing zones, place at head of list */
     {
       DerefScope scope;
       auto part_val = part->deref_mut(scope);
+      auto zone_val = zone->deref_mut(scope);
       if (part_val->lastZone==NULL)
       {
-        zone->zoneId = 1;
+        zone_val->zoneId = 1;
         part_val->firstZone = zone;
 	      part_val->lastZone = zone;
       }
       else 
       {
         /* Give this zone the last Zone's id + 1 */
-        zone->zoneId = part_val->lastZone->zoneId + 1;
+        auto lastzone_ref = part_val->lastZone->deref_mut(scope);
+        zone_val->zoneId = lastzone_ref->zoneId + 1;
     
-        part_val->lastZone->nextZone = zone;
+        lastzone_ref->nextZone = zone;
         part_val->lastZone = zone;
       }
 
@@ -164,21 +191,23 @@ void addZone (UniquePtr<Part> *part, Zone *zone)
     // /* Inialized the rest of the zone fields */
     // zone->partId = (*part)->partId;
     // zone->value = 0.0;
-  //  #endif
 }
 
-struct Data4096 {
-  char data[4096];
-};
-using Data_t = struct Data4096;
+// struct Data4096 {
+//   char data[4096];
+// };
+// using Data_t = struct Data4096;
+
+
 void do_work(FarMemManager *manager) {
 
 //CLOMP_numThreads = convert_to_positive_long ("numThreads", argv[1]);
 //CLOMP_allocThreads = convert_to_positive_long ("numThreads", argv[2]);
-constexpr long CLOMP_numParts = 2;
-constexpr long CLOMP_zonesPerPart = 10;
+
 CLOMP_zoneSize = 32;
-UniquePtr<Part> *pointer_loc_ptr;
+UniquePtr<Part> *part;  //as in clomp
+
+//UniquePtr<Part> *pointer_loc_ptr;
 //CLOMP_flopScale = convert_to_positive_long ("flopScale", argv[6]);
 //CLOMP_timeScale = convert_to_positive_long ("timeScale", argv[7])
 
@@ -193,24 +222,30 @@ UniquePtr<Part> *pointer_loc_ptr;
 
 
 //TODO need to declare this as global, error: partArray’ was not declared in this scope
-auto partArray = manager->allocate_array<UniquePtr<Part>, CLOMP_numParts>();
+//auto partArray = manager->allocate_array<UniquePtr<Part>, CLOMP_numParts>();
+auto partArray1 = manager->allocate_array<UniquePtr<Part>, CLOMP_numParts>(); //last working copy
+partArray = &partArray1;
+//auto partArray = manager->allocate_array<UniquePtr<UniquePtr<Part>, CLOMP_numParts>();
 //auto partArray = manager->allocate_array<unique_ptr_part_t, CLOMP_numParts>();
 
-for (long partId = 0; partId < CLOMP_numParts; partId++)
+
+//#if 0
+for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
     {
       DerefScope scope;
       //partArray.at_mut(scope, partId) = NULL;
       //cout<<"Lines per part"<<endl;
 
-      auto &pointer_loc = partArray.at_mut(scope,partId);
+      auto &pointer_loc = partArray->at_mut(scope,partId);
       pointer_loc_ptr = &pointer_loc;
       auto raw_pointer_loc = pointer_loc_ptr->deref_mut(scope);
       raw_pointer_loc = NULL;
 
     } 
 
-for (long partId = 0; partId < CLOMP_numParts; partId++)
+for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
     {
+
 	    //Part* part;
       UniquePtr<Part> *part;
 	    // if ((part= (Part *) malloc (sizeof (Part))) == NULL)
@@ -219,34 +254,63 @@ for (long partId = 0; partId < CLOMP_numParts; partId++)
 	    //     exit (1);
 	    //   }
       //uncomment when activating addPart function body
+//#if 0
       addPart(part, partId);
+//#endif
     }
 
-for (long partId = 0; partId < CLOMP_numParts; partId++)
+for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
 {
 	//Zone *zoneArray, *zone;
   //Zone *zone;
-	int zoneId;
+	uint64_t zoneId;
+  far_memory::Array<UniquePtr<Zone>, CLOMP_zonesPerPart> *ZoneArray;
 
-  auto zoneArray = manager->allocate_array<Zone *, CLOMP_zonesPerPart>();
+  auto zoneArray = manager->allocate_array<UniquePtr<Zone>, CLOMP_zonesPerPart>();
 
   for (zoneId = 0; zoneId < CLOMP_zonesPerPart; zoneId++)
 	{
     /* Get the current zone being placed */
-    DerefScope scope;
-	  auto zone = &zoneArray.at(scope,zoneId);
-	    
-	  /* Add it to the end of the the part */
+      DerefScope scope;
+      auto &pointer_loc_z = zoneArray.at_mut(scope,zoneId);
+      auto pointer_loc_zone = &pointer_loc_z;
+
+      auto &pointer_loc_part = partArray->at_mut(scope,partId);
+      auto pointer_loc_ptr_part = &pointer_loc_part;
+
+      addZone (pointer_loc_ptr_part, pointer_loc_zone);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // /* Get the current zone being placed */
+    // DerefScope scope;
+	  // auto zone = &zoneArray.at_mut(scope,zoneId);
+	  //                                          //SEFAULT GONE AFTER  COMMENTING THIS PART
+	  // /* Add it to the end of the the part */
 
     
-	  auto &pointer_loc = partArray.at_mut(scope,partId);
-    pointer_loc_ptr = &pointer_loc;
-    addZone (pointer_loc_ptr, *zone);
-
+	  // auto &pointer_loc = partArray->at_mut(scope,partId); 
+    // pointer_loc_ptr = &pointer_loc;
+    // //#if 0
+    // addZone (pointer_loc_ptr, *zone); // segfault  in this line; check the function body
+    // //#endif
   }
 
 }
-
+//#endif
 }
 void _main(void *arg) {
   std::unique_ptr<FarMemManager> manager =
