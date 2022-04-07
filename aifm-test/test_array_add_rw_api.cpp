@@ -41,7 +41,7 @@ typedef struct _Zone
     uint64_t zoneId;
     uint64_t partId;
     uint64_t value;
-    struct UniquePtr<_Zone> *nextZone;
+    struct UniquePtr<_Zone> nextZone;
 } Zone;
 
 
@@ -51,8 +51,8 @@ typedef struct _Part
     uint64_t partId;
     uint64_t zoneCount;
     uint64_t update_count;  
-    UniquePtr<Zone> *firstZone;
-    UniquePtr<Zone> *lastZone;
+    UniquePtr<Zone> firstZone;
+    UniquePtr<Zone> lastZone;
     uint64_t deposit_ratio;
     uint64_t residue;
     uint64_t expected_first_value; /* Used to check results */
@@ -128,11 +128,13 @@ void addPart (UniquePtr<Part> *part, uint64_t partId)
     
     DerefScope scope;
     auto part_val = part->deref_mut(scope);
-    
+    auto part_val_firstZone = part_val->firstZone.deref_mut(scope);
+    auto part_val_lastZone = part_val->firstZone.deref_mut(scope);
+
     part_val->partId = partId;
 
-    part_val->firstZone = nullptr;
-    part_val->lastZone = nullptr;
+    part_val_firstZone = nullptr;
+    part_val_lastZone = nullptr;
     
 
     /* Put part pointer in array */
@@ -152,7 +154,7 @@ void addPart (UniquePtr<Part> *part, uint64_t partId)
 //#endif
 }
 
-void addZone (UniquePtr<Part> *part, UniquePtr<Zone> *zone)
+void addZone (UniquePtr<Part> part, UniquePtr<Zone> zone)
 {
   //memset (zone, 0xFF, CLOMP_zoneSize);
 
@@ -161,7 +163,7 @@ void addZone (UniquePtr<Part> *part, UniquePtr<Zone> *zone)
   {
         //uint64_t var = 1111;
         DerefScope scope;
-        auto zone_val = zone->deref_mut(scope);
+        auto zone_val = zone.deref_mut(scope);
         zone_val = zone_local;
 
         if(zone_val== nullptr)
@@ -171,7 +173,7 @@ void addZone (UniquePtr<Part> *part, UniquePtr<Zone> *zone)
         }
 
 
-        auto part_val = part->deref_mut(scope);
+        auto part_val = part.deref_mut(scope);
         if(part_val== nullptr)
         {
           cout<< "nullptr error! ";
@@ -188,32 +190,32 @@ void addZone (UniquePtr<Part> *part, UniquePtr<Zone> *zone)
   /* If not existing zones, place at head of list */
     {
       DerefScope scope;
-      auto part_val = part->deref_mut(scope);
-      auto zone_val = zone->deref_mut(scope);
-      if(part_val == nullptr)
-        {
-          cout<< "error 2";
-          //exit(0);
-        }
+      auto part_val = part.deref_mut(scope);
+      auto zone_val = zone.deref_mut(scope);
+      // if(part_val == nullptr)
+      //   {
+      //     cout<< "error 2";
+      //     //exit(0);
+      //   }
 
-      auto part_lastzone = part_val->lastZone->deref_mut(scope);
+      auto part_lastzone = part_val->lastZone.deref_mut(scope);
     
 
 
       if (part_lastzone==nullptr)
       {
         zone_val->zoneId = 1;
-        part_val->firstZone = zone;
-	      part_val->lastZone = zone;
+        part_val->firstZone = std::move(zone);
+	      part_val->lastZone = std::move(zone);
       }
       else 
       {
         /* Give this zone the last Zone's id + 1 */
-        auto lastzone_ref = part_val->lastZone->deref_mut(scope);
+        auto lastzone_ref = part_val->lastZone.deref_mut(scope);
         zone_val->zoneId = lastzone_ref->zoneId + 1;
     
-        lastzone_ref->nextZone = zone;
-        part_val->lastZone = zone;
+        lastzone_ref->nextZone = std::move(zone);
+        part_val->lastZone = std::move(zone);
       }
 
     }
@@ -328,7 +330,7 @@ for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
 	//Zone *zoneArray, *zone;
   //Zone *zone;
 	uint64_t zoneId;
-  UniquePtr<Zone> *zone;
+  UniquePtr<Zone> zone;
   //far_memory::Array<UniquePtr<Zone>, CLOMP_zonesPerPart> *zoneArray;
 
   auto zoneArray = manager->allocate_array<UniquePtr<Zone>, CLOMP_zonesPerPart>();
@@ -339,20 +341,20 @@ for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
     /* Get the current zone being placed */
       Zone *zone=(Zone*)malloc(sizeof(Zone*));
 
-      UniquePtr<Zone> *pointer_loc_zone;
-      UniquePtr<Part> *pointer_loc_ptr_part;
+      UniquePtr<Zone> pointer_loc_zone;
+      UniquePtr<Part> pointer_loc_ptr_part;
     {
         DerefScope scope;
         auto &pointer_loc_z = zoneArray.at_mut(scope,zoneId);
-        pointer_loc_zone = &pointer_loc_z;
+        pointer_loc_zone = std::move(pointer_loc_z);
 
         auto &pointer_loc_part = partArray->at_mut(scope,partId);
-        pointer_loc_ptr_part = &pointer_loc_part;
-        if(pointer_loc_ptr_part == nullptr)
-        {
-          cout<< "error inside deref addZone";
-          //exit(0);
-        }
+        pointer_loc_ptr_part = std::move(pointer_loc_part);
+        // if(pointer_loc_ptr_part == nullptr)
+        // {
+        //   cout<< "error inside deref addZone";
+        //   //exit(0);
+        // }
         
     }
       
@@ -367,13 +369,13 @@ for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
 
       // auto &pointer_loc_part = partArray->at_mut(scope,partId);
       // auto pointer_loc_ptr_part = &pointer_loc_part;
-      if(pointer_loc_ptr_part== nullptr)
-        {
-          cout<< "error.........";
-          //exit(0);
-        }
+      // if(pointer_loc_ptr_part== nullptr)
+      //   {
+      //     cout<< "error.........";
+      //     //exit(0);
+      //   }
 
-      addZone (pointer_loc_ptr_part, pointer_loc_zone); // need to pass global here, this is the reason for segfault
+      addZone (std::move(pointer_loc_ptr_part), std::move(pointer_loc_zone)); // need to pass global here, this is the reason for segfault
 
 
 

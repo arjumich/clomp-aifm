@@ -7,7 +7,8 @@ MEM_SERVER_DPDK_IP=18.18.1.3
 MEM_SERVER_PORT=8000
 MEM_SERVER_STACK_KB=65536
 
-source $AIFM_PATH/configs/ssh
+#source $AIFM_PATH/configs/ssh
+source ../aifm/configs/ssh
 
 function say_failed() {
     echo -e "----\e[31mFailed\e[0m"

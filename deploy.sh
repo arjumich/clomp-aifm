@@ -15,7 +15,8 @@ rerun_local_iokerneld
 rerun_mem_server
 
 # Run Fluidanimate
-run_program ./clomp 1 -1 1 400 32 1 100 
+run_program ./clomp 1 -1 1 400 32 1 100
+#run_program gdb ./clomp 
 
 sleep 3
 
