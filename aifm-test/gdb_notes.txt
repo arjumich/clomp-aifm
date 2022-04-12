@@ -11,5 +11,6 @@ handle SIGUSR2 nostop noprint
 handle SIGUSR1 nostop noprint
 # Run GDB with Config File and Server
 r /users/arjunsh/AIFM/aifm/configs/client.config 18.18.1.3:8000
+r /users/arjunsh/AIFM/aifm/configs/client.config 18.18.1.3:8000 1 -1 1 400 32 1 100
 # Clean Environment
 ./cleanenv.sh
