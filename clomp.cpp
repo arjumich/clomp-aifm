@@ -153,7 +153,7 @@ typedef struct _Zone
     long partId;
     double value;
     //struct _Zone *nextZone; // how do I convert this.
-    struct UniquePtr<_Zone> nextZone;
+    struct UniquePtr<_Zone> *nextZone;
 } Zone;
 
 
@@ -165,8 +165,8 @@ typedef struct _Part
     long update_count;  
     //Zone *firstZone;
     //Zone *lastZone;
-    UniquePtr<Zone> firstZone; // PORT 
-    UniquePtr<Zone> lastZone;
+    UniquePtr<Zone> *firstZone; // PORT 
+    UniquePtr<Zone> *lastZone;
     double deposit_ratio;
     double residue;
     double expected_first_value; /* Used to check results */
@@ -179,6 +179,7 @@ typedef struct _Part
 // PORT - global declare partArray
 far_memory::Array<UniquePtr<Part>, CLOMP_numParts> *partArray;
 UniquePtr<Part> *pointer_loc_ptr_part;
+UniquePtr<Part> *part_ptr;
 UniquePtr<Zone> *pointer_loc_zone;
 
 
@@ -352,7 +353,7 @@ long convert_to_positive_long (const char *parm_name, const char *parm_val)
 void update_part (UniquePtr<Part> *part, double incoming_deposit)
 {
     //Zone *zone;
-    UniquePtr<Zone> zone; // PORT
+    UniquePtr<Zone> *zone; // PORT
     double deposit_ratio, remaining_deposit, deposit;
     long scale_count;
 
@@ -363,7 +364,7 @@ void update_part (UniquePtr<Part> *part, double incoming_deposit)
     {
         DerefScope scope;
         auto part_val = part->deref_mut(scope);
-        auto zone_val = zone.deref_mut(scope);
+        auto zone_val = zone->deref_mut(scope);
         part_val->update_count++;
         deposit_ratio = part_val->deposit_ratio;
     
@@ -386,7 +387,7 @@ void update_part (UniquePtr<Part> *part, double incoming_deposit)
             * remaining_deposit in the zone and carrying the rest to the remaining
             * zones
             */
-            for (zone = std::move(part_val->firstZone); zone_val != nullptr; zone = std::move(zone_val->nextZone))
+            for (zone_val = part_val->firstZone->deref_mut(scope); zone_val != nullptr; zone_val = zone_val->nextZone->deref_mut(scope))
             {
                 /* Calculate the deposit for this zone */
                 deposit = remaining_deposit * deposit_ratio;
@@ -408,7 +409,7 @@ void update_part (UniquePtr<Part> *part, double incoming_deposit)
             * remaining_deposit in the zone and carrying the rest to the remaining
             * zones
             */
-            for (zone = std::move(part_val->firstZone); zone_val != nullptr; zone = std::move(zone_val->nextZone))
+            for (zone_val = part_val->firstZone->deref_mut(scope); zone_val != nullptr; zone_val = zone_val->nextZone->deref_mut(scope))
             {
                 /* Allow scaling of the flops per double loaded, so that you
                 * can get expensive iterations without blowing the cache.
@@ -439,25 +440,26 @@ void reinitialize_parts()
 {
     uint64_t pidx;
     //Zone *zone;
-    UniquePtr<Zone> zone;
+    UniquePtr<Zone> *zone;
+    UniquePtr<Part> *part_ptr;
         
     /* Reset all the zone values to 0.0 and the part residue to 0.0 */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
         DerefScope scope;
         auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        auto partArray_pidx = pointer_loc_ptr_part->deref_mut(scope);
+        part_ptr = &pointer_loc;
+        auto partArray_pidx = part_ptr->deref_mut(scope);
         
-        auto zone_val = zone.deref_mut(scope);
+        auto zone_val = zone->deref_mut(scope);
 
-        for (zone = std::move(partArray_pidx->firstZone); 
+        for (zone_val = partArray_pidx->firstZone->deref_mut(scope); 
             zone_val != NULL; 
-            zone = std::move(zone_val->nextZone))
-        {
-            /* Reset zone's value to 0 */
-            zone_val->value = 0.0;
-        }
+            zone_val = zone_val->nextZone->deref_mut(scope))
+            {
+                /* Reset zone's value to 0 */
+                zone_val->value = 0.0;
+            }
 
         /* Reset residue */
         partArray_pidx->residue = 0.0;
@@ -470,12 +472,15 @@ void reinitialize_parts()
     /* Also sets each zone update_count to 1, which sanity check wants */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        //auto partArray_pidx = pointer_loc_ptr_part->deref_mut(scope);
-
-        update_part (pointer_loc_ptr_part, 0.0);
+        UniquePtr<Part> *partArray_pidx_ptr;
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            partArray_pidx_ptr = &pointer_loc;
+            //partArray_pidx_ptr = part_ptr->deref_mut(scope);
+        }
+        
+        update_part (partArray_pidx_ptr, 0.0);
     }
 
 }
@@ -639,7 +644,7 @@ void print_data_stats (const char *desc)
     double value_sum, residue_sum, last_value, dtotal;
     uint64_t pidx;
     //Zone *zone;
-    UniquePtr<Zone> zone;
+    UniquePtr<Zone> *zone;
     int is_reference, error_count;
     
     /* Initialize value and residue sums to zero */
@@ -658,6 +663,7 @@ void print_data_stats (const char *desc)
     
     /* Initialize count of check errors */
     error_count = 0;
+    UniquePtr<Part> *part_ptr;
 
     /* Scan through each part, check that values decrease monotonically
      * and sum up all the values.  Also check that the part residue and
@@ -670,11 +676,11 @@ void print_data_stats (const char *desc)
         */
         DerefScope scope;
         auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        auto partArray_pidx = pointer_loc_ptr_part->deref_mut(scope);
-        auto firstZone_loc = partArray_pidx->firstZone.deref_mut(scope);
+        part_ptr = &pointer_loc;
+        auto partArray_pidx = part_ptr->deref_mut(scope);
+        auto firstZone_loc = partArray_pidx->firstZone->deref_mut(scope);
 
-        auto zone_val = zone.deref_mut(scope);
+        auto zone_val = zone->deref_mut(scope);
 
         if (is_reference)
         {
@@ -714,7 +720,7 @@ void print_data_stats (const char *desc)
         last_value = firstZone_loc->value;
 
         /* Scan through zones checking that values decrease monotonically */
-        for (zone = std::move(partArray_pidx->firstZone); zone_val != nullptr; zone = std::move(zone_val->nextZone))
+        for (zone_val = partArray_pidx->firstZone->deref_mut(scope); zone_val != nullptr; zone_val = zone_val->nextZone->deref_mut(scope))
         {
             if (zone_val->value > last_value)
             {
@@ -768,8 +774,8 @@ void print_data_stats (const char *desc)
     {
         DerefScope scope;
         auto &pointer_loc = partArray->at_mut(scope,0);
-        pointer_loc_ptr_part = &pointer_loc;
-        auto partArray_0 = pointer_loc_ptr_part->deref_mut(scope);
+        part_ptr = &pointer_loc;
+        auto partArray_0 = part_ptr->deref_mut(scope);
 
 
         if (partArray_0->update_count != 1)
@@ -813,6 +819,7 @@ double calc_deposit ()
 {
     double residue, deposit;
     uint64_t pidx;
+    UniquePtr<Part> *part_ptr;
 
     /* Sanity check, make sure residues have be updated since last calculation
      * This code cannot be pulled out of loops or above loops!
@@ -821,8 +828,8 @@ double calc_deposit ()
 
     DerefScope scope;
     auto &pointer_loc = partArray->at_mut(scope,0);
-    pointer_loc_ptr_part = &pointer_loc;
-    auto partArray_0 = pointer_loc_ptr_part->deref_mut(scope);
+    part_ptr = &pointer_loc;
+    auto partArray_0 = part_ptr->deref_mut(scope);
 
     if (partArray_0->update_count != 1)
     {
@@ -880,27 +887,37 @@ void do_calc_deposit_only()
     /* Do all the iterations */
     for (iteration = 0; iteration < CLOMP_num_iterations; iteration ++)
     {
-	/* 10 subcycles to every iteration, calc_deposit call in each one */
-	for (subcycle = 0; subcycle < 10; subcycle++)
-	{
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,0);
-        pointer_loc_ptr_part = &pointer_loc;
-        auto partArray_0 = pointer_loc_ptr_part->deref_mut(scope);
+        /* 10 subcycles to every iteration, calc_deposit call in each one */
+        for (subcycle = 0; subcycle < 10; subcycle++)
+        {
+            UniquePtr<Zone> *zone_ptr;
+            {
+                UniquePtr<Part> *part_ptr;
 
-	    /* Fool calc_deposit sanity checks for this timing measurement */
+                DerefScope scope;
+                auto &pointer_loc = partArray->at_mut(scope,0);
+                part_ptr = &pointer_loc;
+                auto partArray_0 = part_ptr->deref_mut(scope);
 
-        //partArray[0]->update_count = 1;
-	    partArray_0->update_count = 1;
-	    
-	    /* Calc value, write into first zone's value, in order
-	     * to prevent compiler optimizing away
-	     */
+                /* Fool calc_deposit sanity checks for this timing measurement */
 
-	    //partArray[0]->firstZone->value = calc_deposit();
-        auto firstZone_loc = partArray_0->firstZone.deref_mut(scope);
-        firstZone_loc->value = calc_deposit();
-	}
+                //partArray[0]->update_count = 1;
+                partArray_0->update_count = 1;
+                
+                /* Calc value, write into first zone's value, in order
+                * to prevent compiler optimizing away
+                */
+
+                //partArray[0]->firstZone->value = calc_deposit();
+
+                // PORT TODO need to make this simpler, also, calling calc_deposit() from derefscope, so something can go wrong.
+                zone_ptr = partArray_0->firstZone;
+                auto zone_ptr_val = zone_ptr->deref_mut(scope);
+                zone_ptr_val->value = calc_deposit();
+            }
+            //zone_ptr->value = calc_deposit();
+            
+        }
     }
 }
 
@@ -955,11 +972,13 @@ void serial_ref_module1()
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        //update_part (partArray[pidx], deposit);
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+            //update_part (partArray[pidx], deposit);
+        }
+        update_part (part_ptr, deposit);
     }
 }
 
@@ -979,11 +998,12 @@ void serial_ref_module2()
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
     /* ---------------- SUBCYCLE 2 OF 2 ----------------- */
@@ -994,10 +1014,12 @@ void serial_ref_module2()
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1016,10 +1038,12 @@ void serial_ref_module3()
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1031,10 +1055,12 @@ void serial_ref_module3()
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1046,10 +1072,12 @@ void serial_ref_module3()
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1068,10 +1096,12 @@ void serial_ref_module4()
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1083,10 +1113,12 @@ void serial_ref_module4()
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1098,10 +1130,12 @@ void serial_ref_module4()
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1113,10 +1147,12 @@ void serial_ref_module4()
     /* Scan through zones and add appropriate deposit to each zone */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1165,10 +1201,12 @@ void static_omp_module1()
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1190,10 +1228,13 @@ void static_omp_module2()
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1206,10 +1247,12 @@ void static_omp_module2()
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1231,10 +1274,12 @@ void static_omp_module3()
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1247,10 +1292,12 @@ void static_omp_module3()
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1263,10 +1310,12 @@ void static_omp_module3()
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1288,10 +1337,12 @@ void static_omp_module4()
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1304,10 +1355,12 @@ void static_omp_module4()
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1320,10 +1373,12 @@ void static_omp_module4()
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1336,10 +1391,12 @@ void static_omp_module4()
 //#pragma omp parallel for private (pidx) schedule(static)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1393,10 +1450,12 @@ void dynamic_omp_module1()
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1418,10 +1477,12 @@ void dynamic_omp_module2()
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1434,10 +1495,12 @@ void dynamic_omp_module2()
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1459,10 +1522,12 @@ void dynamic_omp_module3()
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1475,10 +1540,12 @@ void dynamic_omp_module3()
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1491,10 +1558,12 @@ void dynamic_omp_module3()
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1516,10 +1585,12 @@ void dynamic_omp_module4()
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1532,10 +1603,12 @@ void dynamic_omp_module4()
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1548,10 +1621,12 @@ void dynamic_omp_module4()
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1564,10 +1639,12 @@ void dynamic_omp_module4()
 //#pragma omp parallel for private (pidx) schedule(dynamic)
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1641,10 +1718,12 @@ void manual_omp_module1(int startPidx, int endPidx)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1686,10 +1765,12 @@ void manual_omp_module2(int startPidx, int endPidx)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1722,10 +1803,12 @@ void manual_omp_module2(int startPidx, int endPidx)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1768,10 +1851,12 @@ void manual_omp_module3(int startPidx, int endPidx)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1803,10 +1888,12 @@ void manual_omp_module3(int startPidx, int endPidx)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1838,10 +1925,12 @@ void manual_omp_module3(int startPidx, int endPidx)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -1883,10 +1972,12 @@ void manual_omp_module4(int startPidx, int endPidx)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1918,10 +2009,12 @@ void manual_omp_module4(int startPidx, int endPidx)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1954,10 +2047,12 @@ void manual_omp_module4(int startPidx, int endPidx)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -1990,10 +2085,12 @@ void manual_omp_module4(int startPidx, int endPidx)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -2092,10 +2189,12 @@ void bestcase_omp_module1(int startPidx, int endPidx, double deposit)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -2119,10 +2218,12 @@ void bestcase_omp_module2(int startPidx, int endPidx, double deposit)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -2137,10 +2238,12 @@ void bestcase_omp_module2(int startPidx, int endPidx, double deposit)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -2163,10 +2266,12 @@ void bestcase_omp_module3(int startPidx, int endPidx, double deposit)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -2181,10 +2286,12 @@ void bestcase_omp_module3(int startPidx, int endPidx, double deposit)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -2199,10 +2306,12 @@ void bestcase_omp_module3(int startPidx, int endPidx, double deposit)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -2225,10 +2334,12 @@ void bestcase_omp_module4(int startPidx, int endPidx, double deposit)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -2243,10 +2354,12 @@ void bestcase_omp_module4(int startPidx, int endPidx, double deposit)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -2261,10 +2374,12 @@ void bestcase_omp_module4(int startPidx, int endPidx, double deposit)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 
@@ -2279,10 +2394,12 @@ void bestcase_omp_module4(int startPidx, int endPidx, double deposit)
      */
     for (pidx = startPidx; pidx <= endPidx; pidx++)
     {
-        DerefScope scope;
-        auto &pointer_loc = partArray->at_mut(scope,pidx);
-        pointer_loc_ptr_part = &pointer_loc;
-        update_part (pointer_loc_ptr_part, deposit);
+        {
+            DerefScope scope;
+            auto &pointer_loc = partArray->at_mut(scope,pidx);
+            part_ptr = &pointer_loc;
+        }
+        update_part (part_ptr, deposit);
         //update_part (partArray[pidx], deposit);
     }
 }
@@ -2376,8 +2493,8 @@ void do_bestcase_omp_version(long num_iterations)
         {
             DerefScope scope;
             auto &pointer_loc = partArray->at_mut(scope,0);
-            pointer_loc_ptr_part = &pointer_loc;
-            auto partArray_0 = pointer_loc_ptr_part->deref_mut(scope);
+            part_ptr = &pointer_loc;
+            auto partArray_0 = part_ptr->deref_mut(scope);
 
             /* Fool calc_deposit sanity checks for this timing measurement */
 
@@ -2389,7 +2506,7 @@ void do_bestcase_omp_version(long num_iterations)
             */
 
             //partArray[0]->firstZone->value = calc_deposit();
-            auto firstZone_loc = partArray_0->firstZone.deref_mut(scope);
+            auto firstZone_loc = partArray_0->firstZone->deref_mut(scope);
             firstZone_loc->value = calc_deposit();
         }
     }
@@ -2606,14 +2723,14 @@ void addZone (Part *part, Zone *zone)
 
 // PORT - aifm addZone 
 
-void addZone (UniquePtr<Part> part, UniquePtr<Zone> zone)
+void addZone (UniquePtr<Part> part, UniquePtr<Zone> *zone)
 {
     Zone *zone_local=(Zone*)malloc(sizeof(Zone*));
 
     // TODO - Sanity check(NULL check) is still remaining 
     {
         DerefScope scope;
-        auto zone_val = zone.deref_mut(scope);
+        auto zone_val = zone->deref_mut(scope);
         zone_val = zone_local;
 
         if(zone_val== nullptr)
@@ -2632,25 +2749,33 @@ void addZone (UniquePtr<Part> part, UniquePtr<Zone> zone)
 
         //auto part_val = part.deref_mut(scope); // is this working? 
         //auto zone_val = zone.deref_mut(scope);     // same scope for both zone and part 
-        auto part_lastzone = part_val->lastZone.deref_mut(scope);
+        auto part_firstzone = part_val->firstZone->deref_mut(scope);
+        auto part_lastzone = part_val->lastZone->deref_mut(scope);
+        
 
         if (part_lastzone==nullptr)
         {
             zone_val->zoneId = 1;
-            part_val->firstZone = std::move(zone);
-	        part_val->lastZone = std::move(zone);
+            part_firstzone = zone_val;
+	        part_lastzone = zone_val;
         }
         else // TODO - zone dereferencing is stil incomplete; how to do for "lastZone->zoneId". Solved. Seems to be working, error gone  
         {
             /* Give this zone the last Zone's id + 1 */
-            auto lastzone_ref = part_val->lastZone.deref_mut(scope);
-            zone_val->zoneId = lastzone_ref->zoneId + 1;
+            //auto lastzone_ref = part_val->lastZone.deref_mut(scope);
+            zone_val->zoneId = part_lastzone->zoneId + 1;
         
-            lastzone_ref->nextZone = std::move(zone);
-            part_val->lastZone = std::move(zone);
+            auto part_lastzone_nextZone = part_lastzone->nextZone->deref_mut(scope);
+            part_lastzone_nextZone = zone_val;
+            part_lastzone = zone_val;
             //zone_val->zoneId = part_val->lastZone->zoneId + 1;
             //part_val->lastZone->nextZone = zone;
         }
+
+        auto zone_val_nextZone = zone_val->nextZone->deref_mut(scope);
+        zone_val_nextZone = nullptr;
+        zone_val->partId = part_val->partId;
+        zone_val->value = 0.0;
     }
     //memset (zone, 0xFF, CLOMP_zoneSize);
     //cout<<"test if it enters...........";
@@ -2660,7 +2785,7 @@ void addZone (UniquePtr<Part> part, UniquePtr<Zone> zone)
         DerefScope scope;
         auto part_val = part.deref_mut(scope); // is this working? 
         auto zone_val = zone.deref_mut(scope);     // same scope for both zone and part 
-        auto part_lastzone = part_val->lastZone.deref_mut(scope);
+        auto part_lastzone = part_val->lastZonederef_mut(scope);
 
         if (part_lastzone==nullptr)
         {
@@ -2998,14 +3123,15 @@ FarMemManager *far_mem_manager = manager.get();
         for (zoneId = 0; zoneId < CLOMP_zonesPerPart; zoneId++)
 	    {   
 
-            UniquePtr<Zone> pointer_loc_zone;
+            UniquePtr<Zone> *pointer_loc_zone;
             UniquePtr<Part> pointer_loc_ptr_part;
 
             {
                 /* Get the current zone being placed */
                 DerefScope scope;
 	            auto &pointer_loc_z = zoneArray.at_mut(scope,zoneId);
-                pointer_loc_zone = std::move(pointer_loc_z);
+                //pointer_loc_zone = std::move(pointer_loc_z);
+                pointer_loc_zone = &pointer_loc_z;
 
                 auto &pointer_loc_part = partArray->at_mut(scope,partId);
                 pointer_loc_ptr_part = std::move(pointer_loc_part);
@@ -3021,7 +3147,7 @@ FarMemManager *far_mem_manager = manager.get();
             // }
 
             //addZone (pointer_loc_ptr_part, pointer_loc_zone);
-            addZone (std::move(pointer_loc_ptr_part), std::move(pointer_loc_zone));
+            addZone (std::move(pointer_loc_ptr_part), pointer_loc_zone);
 
         }
 
