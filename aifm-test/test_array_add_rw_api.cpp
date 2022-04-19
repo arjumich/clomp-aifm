@@ -21,8 +21,9 @@ constexpr uint64_t kFarMemSize = (4ULL << 30);
 constexpr uint32_t kNumGCThreads = 12;
 constexpr uint32_t kNumEntries =
     (16ULL << 20); // So the array size is larger than the local cache size.
-constexpr uint64_t CLOMP_numParts = 2;
+constexpr uint64_t CLOMP_numParts = 1;
 constexpr uint64_t CLOMP_zonesPerPart = 10;
+
 /* Command line parameters, see usage info (initially -1 for sanity check)*/
 //long CLOMP_numThreads = -2;       /* > 0 or -1 valid */
 //long CLOMP_allocThreads = -2;     /* > 0 or -1 valid */
@@ -30,7 +31,7 @@ constexpr uint64_t CLOMP_zonesPerPart = 10;
 ////long CLOMP_zonesPerPart = -1;     /* > 0 valid */
 //long CLOMP_flopScale = -1;        /* > 0 valid, 1 nominal */
 //long CLOMP_timeScale = -1;        /* > 0 valid, 100 nominal */
-uint64_t CLOMP_zoneSize = -1;         /* > 0 valid, (sizeof(Zone) true min)*/
+uint64_t CLOMP_zoneSize = 100;         /* > 0 valid, (sizeof(Zone) true min)*/
 //char *CLOMP_exe_name = NULL;      /* Points to argv[0] */
 
 
@@ -83,14 +84,14 @@ UniquePtr<Zone> *pointer_loc_zone;
 //**addPart is not working with AIFM. Need to check again.
 
 
-void addPart (UniquePtr<Part> *part, uint64_t partId)
+void addPart (UniquePtr<Part> part, uint64_t partId)
 {
 //#if 0
   Part *part_local=(Part*)malloc(sizeof(Part*));
   
   {
     DerefScope scope;
-    auto part_val = part->deref_mut(scope);
+    auto part_val = part.deref_mut(scope);
     part_val = part_local;
 
 
@@ -104,6 +105,16 @@ void addPart (UniquePtr<Part> *part, uint64_t partId)
           cout<< "error";
           //exit(0);
         }
+
+
+
+    auto part_val_firstZone = part_val->firstZone.deref_mut(scope);
+    auto part_val_lastZone = part_val->firstZone.deref_mut(scope);
+
+    part_val->partId = partId;
+
+    part_val_firstZone = nullptr;
+    part_val_lastZone = nullptr;
 
     // part_val->partId = partId; 
     // part_val->zoneCount = CLOMP_zonesPerPart;
@@ -123,11 +134,11 @@ void addPart (UniquePtr<Part> *part, uint64_t partId)
     //   raw_pointer_loc = NULL;
   }
 
-//#if 0
+#if 0
   {
     
     DerefScope scope;
-    auto part_val = part->deref_mut(scope);
+    auto part_val = part.deref_mut(scope);
     auto part_val_firstZone = part_val->firstZone.deref_mut(scope);
     auto part_val_lastZone = part_val->firstZone.deref_mut(scope);
 
@@ -151,7 +162,7 @@ void addPart (UniquePtr<Part> *part, uint64_t partId)
     //part->zoneCount = CLOMP_zonesPerPart;
 
   }
-//#endif
+#endif
 }
 
 void addZone (UniquePtr<Part> part, UniquePtr<Zone> zone)
@@ -303,8 +314,8 @@ for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
     {
 
 	    //Part* part;
-      //UniquePtr<Part> *part;
-      auto unq_part = manager->allocate_unique_ptr<Part>();
+      UniquePtr<Part> unq_part;
+      //auto unq_part = manager->allocate_unique_ptr<Part>();
 
       // {
       //   DerefScope scope;
@@ -321,7 +332,7 @@ for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
 	    //   }
       //uncomment when activating addPart function body
 //#if 0
-      addPart(&unq_part, partId);
+      addPart(std::move(unq_part), partId);
 //#endif
     }
 
@@ -341,12 +352,12 @@ for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
     /* Get the current zone being placed */
       Zone *zone=(Zone*)malloc(sizeof(Zone*));
 
-      UniquePtr<Zone> pointer_loc_zone;
+      UniquePtr<Zone> pointer_loc_zone_z;
       UniquePtr<Part> pointer_loc_ptr_part;
     {
         DerefScope scope;
         auto &pointer_loc_z = zoneArray.at_mut(scope,zoneId);
-        pointer_loc_zone = std::move(pointer_loc_z);
+        pointer_loc_zone_z = std::move(pointer_loc_z);
 
         auto &pointer_loc_part = partArray->at_mut(scope,partId);
         pointer_loc_ptr_part = std::move(pointer_loc_part);
@@ -375,7 +386,7 @@ for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
       //     //exit(0);
       //   }
 
-      addZone (std::move(pointer_loc_ptr_part), std::move(pointer_loc_zone)); // need to pass global here, this is the reason for segfault
+      addZone (std::move(pointer_loc_ptr_part), std::move(pointer_loc_zone_z)); // need to pass global here, this is the reason for segfault
 
 
 
