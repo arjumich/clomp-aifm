@@ -1,0 +1,96 @@
+(gdb) bt full
+#0  addPart(far_memory::UniquePtr<_Part>*, long) () at clomp.cpp:2593
+        scope = <optimized out>
+        part_val = <optimized out>
+        pointer_loc = <optimized out>
+        part_ptr_val = <optimized out>
+        part_local = 0x7ffef401b510
+#1  0x0000555555566266 in _main(void*) () at clomp.cpp:3094
+        unq_part = <optimized out>
+        argv = 0x7fffffffe938
+        hostname = "node-0.arjunsh-123240.cloudprof-pg0.utah.cloudlab.us", '\000' <repeats 147 times>
+        starttime = 1649789086
+        startdate = "Tue Apr 12 12:44:46 2022\n", '\000' <repeats 24 times>
+        partId = 0
+        zoneId = <optimized out>
+        totalZoneCount = <optimized out>
+        zone = <optimized out>
+        prev_zone = <optimized out>
+        deposit = <optimized out>
+        residue = <optimized out>
+        percent_residue = <optimized out>
+        part_deposit_bound = <optimized out>
+        deposit_diff_bound = <optimized out>
+        diterations = <optimized out>
+        calc_deposit_start_ts = {tv_sec = 0, tv_usec = 0}
+        calc_deposit_end_ts = {tv_sec = 0, tv_usec = 0}
+        calc_deposit_seconds = <optimized out>
+        omp_barrier_start_ts = {tv_sec = 0, tv_usec = 0}
+        omp_barrier_end_ts = {tv_sec = 0, tv_usec = 0}
+        omp_barrier_seconds = <optimized out>
+        serial_ref_start_ts = {tv_sec = 0, tv_usec = 0}
+        serial_ref_end_ts = {tv_sec = 0, tv_usec = 0}
+        serial_ref_seconds = <optimized out>
+        bestcase_omp_start_ts = {tv_sec = 0, tv_usec = 0}
+        bestcase_omp_end_ts = {tv_sec = 0, tv_usec = 0}
+        bestcase_omp_seconds = <optimized out>
+        static_omp_start_ts = {tv_sec = 0, tv_usec = 0}
+        static_omp_end_ts = {tv_sec = 0, tv_usec = 0}
+        static_omp_seconds = <optimized out>
+
+
+
+
+
+
+gdb bt full Errors whiler passing using std::move
+
+        #0  far_memory::GenericFarMemPtr::move (this=this@entry=0x7ffff7eec3d0, 
+        other=..., reset_value=reset_value@entry=256) at src/pointer.cpp:156
+    #1  0x00005555555666d1 in far_memory::GenericUniquePtr::operator= (other=..., 
+        this=0x7ffff7eec3d0) at ../../AIFM/aifm/inc/internal/pointer.ipp:311
+    #2  far_memory::UniquePtr<_Part>::operator= (other=..., this=0x7ffff7eec3d0)
+        at ../../AIFM/aifm/inc/internal/pointer.ipp:312
+    #3  _main(void*) () at clomp.cpp:3141
+    #4  0x00005555555a7ba0 in ?? () at runtime/sched.c:128
+    #5  0x0000000000000000 in ?? ()
+    (gdb) bt full
+    #0  far_memory::GenericFarMemPtr::move (this=this@entry=0x7ffff7eec3d0, 
+        other=..., reset_value=reset_value@entry=256) at src/pointer.cpp:156
+            other_obj_id_len = 8 '\b'
+            other_obj_id_ptr = <optimized out>
+            other_obj_id = 140737353007680
+            other_meta_snapshot = {static kSize = 8, static kEvacuationPos = 2, 
+              static kObjectIDBitPos = 26, static kObjectIDBitSize = 38, 
+              static kObjectDataAddrPos = 2, static kObjectDataAddrSize = 6, 
+              static kDirtyClear = 1024, static kPresentClear = 256, 
+              static kHotClear = 128, static kEvacuationSet = 65536, 
+              static kObjIDLenPosShift = 9, static kObjectDataAddrBitPos = 17, 
+              static kObjectSizeBitPos = 10, static kHotPos = 0, 
+              static kPresentPos = 1, static kHotThresh = 2, static kDSIDPos = 0, 
+              static kSharedBitPos = 9, 
+              metadata_ = "\000\000\000\000\000\000\000", static kNull = 256, 
+              static kNullMask = 18446744073709551360}
+            other_present = <optimized out>
+            other_object = <optimized out>
+            guard = <optimized out>
+    #1  0x00005555555666d1 in far_memory::GenericUniquePtr::operator= (other=..., 
+        this=0x7ffff7eec3d0) at ../../AIFM/aifm/inc/internal/pointer.ipp:311
+    No locals.
+    #2  far_memory::UniquePtr<_Part>::operator= (other=..., this=0x7ffff7eec3d0)
+        at ../../AIFM/aifm/inc/internal/pointer.ipp:312
+    No locals.
+    #3  _main(void*) () at clomp.cpp:3141
+            scope = <optimized out>
+            pointer_loc_z = @0x7ffee0000810: {<far_memory::GenericUniquePtr> = {<far_memory::GenericFarMemPtr> = {meta_ = {static kSize = 8, 
+                    static kEvacuationPos = 2, static kObjectIDBitPos = 26, 
+                    static kObjectIDBitSize = 38, static kObjectDataAddrPos = 2, 
+                    static kObjectDataAddrSize = 6, static kDirtyClear = 1024, 
+                    static kPresentClear = 256, static kHotClear = 128, 
+                    static kEvacuationSet = 65536, static kObjIDLenPosShift = 9, 
+                    static kObjectDataAddrBitPos = 17, 
+                    static kObjectSizeBitPos = 10, static kHotPos = 0, 
+                    static kPresentPos = 1, static kHotThresh = 2, 
+                    static kDSIDPos = 0, static kSharedBitPos = 9, 
+                    metadata_ = "\000\000\000\000\000\000\000",
+
