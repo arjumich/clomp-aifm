@@ -12,9 +12,9 @@ LDFLAGS += -lmlx5 -lpthread
 
 CXXFLAGS := $(filter-out -std=gnu++17,$(CXXFLAGS))
 override CXXFLAGS += -std=gnu++2a -fconcepts -Wno-unused-function -mcmodel=medium
-CXXFLAGS += -g -fopenmp -O3 -I. $(INC)
+CXXFLAGS += -g -fopenmp -O0 -I. $(INC)
 
-LDFLAGS += -g -O3 
+LDFLAGS += -g -O0 
 
 all:
 	g++-9 $(CXXFLAGS) clomp.cpp $(librt_libs) $(LDFLAGS) $(libaifm) $(RUNTIME_LIBS) -lm -o clomp $(librt_libs) $(RUNTIME_LIBS)
