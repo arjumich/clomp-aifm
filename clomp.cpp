@@ -2578,31 +2578,34 @@ void addPart (Part *part, long partId)
 
 // PORT - clomp-aifm implementation of addPart
 
-void addPart (UniquePtr<Part> & part, long partId)
+void addPart (UniquePtr<Part> part, long partId)
 {
     // Put part pointer in array TODO - NULL checking is still remaining 
     //Part *part_local=(Part*)malloc(sizeof(Part*));
     struct Part *part_local = new Part;
 
+    if ((partId < 0) || (partId >= CLOMP_numParts))
     {
-        if ((partId < 0) || (partId >= CLOMP_numParts))
-        {
-            fprintf (stderr, "addPart error: partId (%i) out of bounds!\n", (int)partId);
-            exit (1);
-        }
-        
+        fprintf (stderr, "addPart error: partId (%i) out of bounds!\n", (int)partId);
+        exit (1);
+    }
+
+    {
         DerefScope scope;
         auto part_val = part.deref_mut(scope);
         //cout<< typeid(part_val).name();
 
+        cout<< "Type checking inside addPart_1: " <<typeid(part_local).name()<<"\n";
         part_val = part_local;
-        //cout<< typeid(part_val).name();
+        cout<< "Type checking inside addPart_2: "<<typeid(part_val).name()<<"\n";
 
 
         auto &pointer_loc = partArray->at_mut(scope,partId);
-        part_ptr = &pointer_loc;
+        auto part_ptr = &pointer_loc;
 
         auto part_ptr_val = part_ptr->deref_mut(scope);
+
+        cout<< "Type checking inside addPart_3: "<<typeid(part_ptr_val).name()<<"\n";
 
         if (part_ptr_val != nullptr)
         {
@@ -2612,31 +2615,16 @@ void addPart (UniquePtr<Part> & part, long partId)
         }
 
         part_ptr_val = part_val;    // resembles to partArray[partId] = part
-        // if(part_ptr_val== nullptr)
-        // {
-        //     cout<< "error";
-        //     //exit(0);
-        // }
-
-        //previously it was in second derefscope; now putting all in same derefscope
-
-
-
        
-        // DerefScope scope;
-        // auto &pointer_loc = partArray->at_mut(scope,partId);
-        // part_ptr = &pointer_loc;
-        // //cout<< typeid(part_ptr).name();
-        // auto part_val = part_ptr->deref_mut(scope);
-        // //cout<< typeid(part_val).name();
-
         part_val->partId = partId;
+        cout<< "Value checking inside addPart_4: "<< part_ptr_val->partId <<"\n";
         part_val->zoneCount = CLOMP_zonesPerPart;
 
         part_val->deposit_ratio=((double)((1.5*(double)CLOMP_numParts)+partId))/
 	    ((double)(CLOMP_zonesPerPart*CLOMP_numParts));
 
         part_val->residue = 0.0;
+        cout<< "Value checking inside addPart_4: "<< part_ptr_val->residue <<"\n";
 
         // PORT changed on 05/26/22; replace this block to set nullptr on first and last zones without first deref'ing
         // auto part_val_firstZone = part_val->firstZone->deref_mut(scope);
@@ -2649,6 +2637,18 @@ void addPart (UniquePtr<Part> & part, long partId)
         part_val->firstZone = nullptr;
 
     }
+//#if 0
+    {
+        DerefScope scope;
+
+        auto &pointer_loc = partArray->at_mut(scope,partId);
+        auto part_ptr = &pointer_loc;
+
+        auto part_ptr_val = part_ptr->deref_mut(scope);
+        cout<<"partId inside addPart: " << part_ptr_val->partId <<".\n";
+
+    }
+//#endif
 #if 0
     // Set other part properties 
   {
@@ -2758,8 +2758,14 @@ void addZone (Part *part, Zone *zone)
 
 void addZone (UniquePtr<Part> *part, UniquePtr<Zone> *zone)
 {
+
+    if(part == nullptr)
+        {
+          cout<< "nullptr error inside addZone at begining! ";
+          //exit(0);
+        }
     //Zone *zone_local=(Zone*)malloc(sizeof(Zone*));
-    Zone *zone_local = new Zone;
+    struct Zone *zone_local = new Zone;
 
     // TODO - Sanity check(NULL check) is still remaining 
     {
@@ -2784,6 +2790,7 @@ void addZone (UniquePtr<Part> *part, UniquePtr<Zone> *zone)
 
         //auto part_val = part.deref_mut(scope); // is this working? 
         //auto zone_val = zone.deref_mut(scope);     // same scope for both zone and part 
+        //cout<<"partId: " << part_val->partId <<".\n";
         auto part_firstzone = part_val->firstZone->deref_mut(scope);
         auto part_lastzone = part_val->lastZone->deref_mut(scope);
         
@@ -3076,7 +3083,7 @@ FarMemManager *far_mem_manager = manager.get();
 
         auto &pointer_loc = partArray->at_mut(scope,partId);
         pointer_loc_ptr_part = &pointer_loc;
-
+        
         //Changed 19/01/22; undo if soomething is broken
         pointer_loc_ptr_part = nullptr;
         //auto raw_pointer_loc = pointer_loc_ptr_part->deref_mut(scope); // is this required? are we setting the array->part_pointer->part==null? or array->part_pointer==null? according to clomp it should be latter.
@@ -3116,6 +3123,7 @@ FarMemManager *far_mem_manager = manager.get();
     */
 
     // PORT - addPart; TODO - NULL checking is remaining
+
     for (partId = 0; partId < CLOMP_numParts; partId++)
     {
 	    //Part* part;
@@ -3123,15 +3131,33 @@ FarMemManager *far_mem_manager = manager.get();
         
         auto part = manager->allocate_unique_ptr<Part>();
 
+        //UniquePtr<Part> part(new Part);
+
         // if (&part == nullptr)
         // {
         //     fprintf (stderr, "Out of memory allocate part\n");
         //     exit (1);
         // }
 	    
-        addPart(part, partId);
+        addPart(std::move(part), partId);
 
-        cout<<"part added successfully: " << partId<< "\n";
+        cout<<"Debug: part added successfully: " << partId<< "\n";
+    }
+// TEST if parts are getting correctly derefffed or not
+// OUTPUT: segfault. Cant retrieve the partid's from the far memory. 
+    for (partId = 0; partId < CLOMP_numParts; partId++)
+    {
+        {
+            DerefScope scope;
+
+            auto &pointer_loc = partArray->at_mut(scope,partId);
+            auto part_ptr = &pointer_loc;
+
+            const auto part_ptr_val = part_ptr->deref(scope);
+            //cout<< "Testing partArray: "<<typeid(part_ptr_val).name()<<".\n";
+            cout<<"Debug: partId inside Parts: " << part_ptr_val->partId <<".\n";
+
+        }
     }
 
 
@@ -3169,9 +3195,17 @@ FarMemManager *far_mem_manager = manager.get();
                 auto &pointer_loc_part = partArray->at_mut(scope,partId);
                 //pointer_loc_ptr_part = std::move(pointer_loc_part);
                 pointer_loc_ptr_part = &pointer_loc_part;
+
+                // auto val_deref = pointer_loc_ptr_part->deref_mut(scope); //  TEST
+                // cout<<"partId: " << val_deref->partId <<".\n";
             
             }
             cout<< "Before calling addzone: "<<typeid(pointer_loc_ptr_part).name()<<".\n";
+            if(pointer_loc_ptr_part == nullptr)
+            {
+            cout<< "Nullptr Error just before calling addZone";
+            //exit(0);
+            }
             addZone (pointer_loc_ptr_part, zone);
             //addZone (std::move(pointer_loc_ptr_part), pointer_loc_zone);
 

@@ -37,28 +37,28 @@ uint64_t CLOMP_zoneSize = 100;         /* > 0 valid, (sizeof(Zone) true min)*/
 
 
 /* Simple Zone data structure */
-typedef struct _Zone
+struct Zone
 {
     uint64_t zoneId;
     uint64_t partId;
     uint64_t value;
-    struct UniquePtr<_Zone> nextZone;
-} Zone;
+    struct UniquePtr<Zone> *nextZone;
+};
 
 
 /* Part data structure */
-typedef struct _Part
+struct Part
 {
     uint64_t partId;
     uint64_t zoneCount;
     uint64_t update_count;  
-    UniquePtr<Zone> firstZone;
-    UniquePtr<Zone> lastZone;
+    UniquePtr<Zone> *firstZone;
+    UniquePtr<Zone> *lastZone;
     uint64_t deposit_ratio;
     uint64_t residue;
     uint64_t expected_first_value; /* Used to check results */
     uint64_t expected_residue;     /* Used to check results */
-} Part;
+};
 
 /* LL for gdb
 
@@ -84,11 +84,12 @@ UniquePtr<Zone> *pointer_loc_zone;
 //**addPart is not working with AIFM. Need to check again.
 
 
-void addPart (UniquePtr<Part> part, uint64_t partId)
+void addPart (UniquePtr<Part> & part, uint64_t partId)
 {
 //#if 0
-  Part *part_local=(Part*)malloc(sizeof(Part*));
-  
+  //Part *part_local=(Part*)malloc(sizeof(Part*));
+  struct Part *part_local = new Part;
+
   {
     DerefScope scope;
     auto part_val = part.deref_mut(scope);
@@ -105,9 +106,9 @@ void addPart (UniquePtr<Part> part, uint64_t partId)
           cout<< "error";
           //exit(0);
         }
+    part_val->partId = partId;
 
-
-
+#if 0
     auto part_val_firstZone = part_val->firstZone.deref_mut(scope);
     auto part_val_lastZone = part_val->firstZone.deref_mut(scope);
 
@@ -115,7 +116,7 @@ void addPart (UniquePtr<Part> part, uint64_t partId)
 
     part_val_firstZone = nullptr;
     part_val_lastZone = nullptr;
-
+#endif
     // part_val->partId = partId; 
     // part_val->zoneCount = CLOMP_zonesPerPart;
 
@@ -133,6 +134,18 @@ void addPart (UniquePtr<Part> part, uint64_t partId)
     //   auto raw_pointer_loc = pointer_loc_ptr->deref_mut(scope);
     //   raw_pointer_loc = NULL;
   }
+//#if 0
+  {
+        DerefScope scope;
+
+        auto &pointer_loc = partArray->at_mut(scope,partId);
+        auto part_ptr = &pointer_loc;
+
+        auto part_ptr_val = part_ptr->deref_mut(scope);
+        cout<<"partId inside addPart: " << part_ptr_val->partId <<".\n";
+
+  }
+//#endif
 
 #if 0
   {
@@ -164,6 +177,8 @@ void addPart (UniquePtr<Part> part, uint64_t partId)
   }
 #endif
 }
+
+#if 0
 
 void addZone (UniquePtr<Part> part, UniquePtr<Zone> zone)
 {
@@ -260,6 +275,8 @@ void addZone (UniquePtr<Part> part, UniquePtr<Zone> zone)
     // zone->value = 0.0;
 }
 
+#endif
+
 // struct Data4096 {
 //   char data[4096];
 // };
@@ -305,36 +322,43 @@ for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
 
       auto &pointer_loc = partArray->at_mut(scope,partId);
       pointer_loc_ptr = &pointer_loc;
-      auto raw_pointer_loc = pointer_loc_ptr->deref_mut(scope);
-      raw_pointer_loc = NULL;
 
-    } 
+      pointer_loc_ptr = nullptr;
+      // auto raw_pointer_loc = pointer_loc_ptr->deref_mut(scope);
+      // raw_pointer_loc = NULL;
+
+    }
 
 for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
     {
 
 	    //Part* part;
-      UniquePtr<Part> unq_part;
-      //auto unq_part = manager->allocate_unique_ptr<Part>();
+      //UniquePtr<Part> unq_part;
 
-      // {
-      //   DerefScope scope;
-      //   auto raw_part= unq_part.deref_mut(scope);
-      //   Part *part_local = (Part*)malloc(sizeof(Part*));
-      //   raw_part = part_local; 
-      // }
+      auto part_ptr = manager->allocate_unique_ptr<Part>();
+      //auto unq_part = manager->allocate_unique_ptr<Part>()
 
+      //addPart(std::move(part), partId);
+      addPart(part_ptr, partId);
 
-	    // if ((part= (Part *) malloc (sizeof (Part))) == NULL)
-	    //   {
-	    //     fprintf (stderr, "Out of memory allocating part\n");
-	    //     exit (1);
-	    //   }
-      //uncomment when activating addPart function body
-//#if 0
-      addPart(std::move(unq_part), partId);
-//#endif
     }
+
+// for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
+//     {
+//         {
+//             DerefScope scope;
+
+//             auto &pointer_loc = partArray->at_mut(scope,partId);
+//             auto part_ptr = &pointer_loc;
+
+//             const auto part_ptr_val = part_ptr->deref(scope);
+//             //cout<< "Testing partArray: "<<typeid(part_ptr_val).name()<<".\n";
+//             cout<<"Debug: partId inside Parts: " << part_ptr_val->partId <<".\n";
+
+//         }
+//     }
+
+#if 0
 
 for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
 {
@@ -418,6 +442,8 @@ for (uint64_t partId = 0; partId < CLOMP_numParts; partId++)
   }
 
 }
+
+#endif
 //#endif
 }
 void _main(void *arg) {
