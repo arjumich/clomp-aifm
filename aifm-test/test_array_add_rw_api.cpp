@@ -101,12 +101,17 @@ void addPart (UniquePtr<Part> & part, uint64_t partId)
 
     auto part_ptr_val = pointer_loc_ptr->deref_mut(scope);
     part_ptr_val = part_val;    // resembles to partArray[partId] = part
+
+    //memset((void*)part_ptr_val->partId, static_cast<uint64_t>(partId), sizeof(uint64_t));
+
+  //pointer_loc_ptr->write(part_local);
+
     if(part_ptr_val== nullptr)
         {
           cout<< "error";
           //exit(0);
         }
-    part_val->partId = partId;
+    //part_val->partId = partId;
 
 #if 0
     auto part_val_firstZone = part_val->firstZone.deref_mut(scope);
@@ -133,16 +138,26 @@ void addPart (UniquePtr<Part> & part, uint64_t partId)
     //   pointer_loc_ptr = &pointer_loc;
     //   auto raw_pointer_loc = pointer_loc_ptr->deref_mut(scope);
     //   raw_pointer_loc = NULL;
-  }
+  //}
 //#if 0
-  {
-        DerefScope scope;
+  //{
+    //    DerefScope scope;
 
-        auto &pointer_loc = partArray->at_mut(scope,partId);
-        auto part_ptr = &pointer_loc;
+        auto &_pointer_loc = partArray->at_mut(scope,partId);
+        auto _part_ptr = &_pointer_loc;
 
-        auto part_ptr_val = part_ptr->deref_mut(scope);
-        cout<<"partId inside addPart: " << part_ptr_val->partId <<".\n";
+        cout<< "Type checking inside addPart_ Part_ptr: "<<typeid(_part_ptr).name()<<"\n";
+
+        auto _part_ptr_val = _part_ptr->deref_mut(scope);
+
+        cout<< "Type checking inside addPart_ Part_ptr_val: "<<typeid(_part_ptr_val).name()<<"\n";
+        
+        if(_part_ptr_val== nullptr)
+        {
+          cout<< "error";
+          //exit(0);
+        }
+        cout<<"partId inside addPart: " << _part_ptr_val->partId <<".\n";
 
   }
 //#endif

@@ -5,6 +5,14 @@ Deploy
 2. cp shared.sh ../aifm/
 3. only build using ./build_only.sh
 
+To run the testcase
+----------------------------
+cp aifm-test/test_array_add_rw_api.cpp ../aifm/test/.
+cp aifm-test/arj_test.sh ../aifm/.
+cd aifm/
+./build.sh
+./arj_test.sh
+
 
 CLOMP README (Updated for Version 1.2 23Dec2013)
 ------------------------------------------------
