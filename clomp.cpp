@@ -154,7 +154,7 @@ struct Zone
     long partId;
     double value;
     //struct _Zone *nextZone; // how do I convert this.
-    struct UniquePtr<Zone> *nextZone;
+    struct SharedPtr<Zone> *nextZone;
 };
 
 
@@ -166,8 +166,8 @@ struct Part
     long update_count;  
     //Zone *firstZone;
     //Zone *lastZone;
-    UniquePtr<Zone> *firstZone; // PORT 
-    UniquePtr<Zone> *lastZone;
+    SharedPtr<Zone> *firstZone; // PORT 
+    SharedPtr<Zone> *lastZone;
     double deposit_ratio;
     double residue;
     double expected_first_value; /* Used to check results */
@@ -178,10 +178,10 @@ struct Part
 //Part **partArray = NULL;
 
 // PORT - global declare partArray
-far_memory::Array<UniquePtr<Part>, CLOMP_numParts> *partArray;
-UniquePtr<Part> *pointer_loc_ptr_part;
-UniquePtr<Part> *part_ptr;
-UniquePtr<Zone> *pointer_loc_zone;
+far_memory::Array<SharedPtr<Part>, CLOMP_numParts> *partArray;
+SharedPtr<Part> *pointer_loc_ptr_part;
+SharedPtr<Part> *part_ptr;
+SharedPtr<Zone> *pointer_loc_zone;
 
 
 
@@ -351,10 +351,10 @@ long convert_to_positive_long (const char *parm_name, const char *parm_val)
 
 // PORT update_part
 
-void update_part (UniquePtr<Part> *part, double incoming_deposit)
+void update_part (SharedPtr<Part> *part, double incoming_deposit)
 {
     //Zone *zone;
-    UniquePtr<Zone> *zone; // PORT
+    SharedPtr<Zone> *zone; // PORT
     double deposit_ratio, remaining_deposit, deposit;
     long scale_count;
 
@@ -441,8 +441,8 @@ void reinitialize_parts()
 {
     uint64_t pidx;
     //Zone *zone;
-    UniquePtr<Zone> *zone;
-    UniquePtr<Part> *part_ptr;
+    SharedPtr<Zone> *zone;
+    SharedPtr<Part> *part_ptr;
         
     /* Reset all the zone values to 0.0 and the part residue to 0.0 */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
@@ -473,7 +473,7 @@ void reinitialize_parts()
     /* Also sets each zone update_count to 1, which sanity check wants */
     for (pidx = 0; pidx < CLOMP_numParts; pidx++)
     {
-        UniquePtr<Part> *partArray_pidx_ptr;
+        SharedPtr<Part> *partArray_pidx_ptr;
         {
             DerefScope scope;
             auto &pointer_loc = partArray->at_mut(scope,pidx);
@@ -645,7 +645,7 @@ void print_data_stats (const char *desc)
     double value_sum, residue_sum, last_value, dtotal;
     uint64_t pidx;
     //Zone *zone;
-    UniquePtr<Zone> *zone;
+    SharedPtr<Zone> *zone;
     int is_reference, error_count;
     
     /* Initialize value and residue sums to zero */
@@ -664,7 +664,7 @@ void print_data_stats (const char *desc)
     
     /* Initialize count of check errors */
     error_count = 0;
-    UniquePtr<Part> *part_ptr;
+    SharedPtr<Part> *part_ptr;
 
     /* Scan through each part, check that values decrease monotonically
      * and sum up all the values.  Also check that the part residue and
@@ -820,7 +820,7 @@ double calc_deposit ()
 {
     double residue, deposit;
     uint64_t pidx;
-    UniquePtr<Part> *part_ptr;
+    SharedPtr<Part> *part_ptr;
 
     /* Sanity check, make sure residues have be updated since last calculation
      * This code cannot be pulled out of loops or above loops!
@@ -891,9 +891,9 @@ void do_calc_deposit_only()
         /* 10 subcycles to every iteration, calc_deposit call in each one */
         for (subcycle = 0; subcycle < 10; subcycle++)
         {
-            UniquePtr<Zone> *zone_ptr;
+            SharedPtr<Zone> *zone_ptr;
             {
-                UniquePtr<Part> *part_ptr;
+                SharedPtr<Part> *part_ptr;
 
                 DerefScope scope;
                 auto &pointer_loc = partArray->at_mut(scope,0);
@@ -1690,7 +1690,7 @@ void manual_omp_module1(int startPidx, int endPidx)
     static double deposit;   /* Must be static! */
     uint64_t pidx;
     //Part *part;
-    UniquePtr<Part> *part;  // TODO - since it's left unused, do we need it here? goes for all other blocks 
+    SharedPtr<Part> *part;  // TODO - since it's left unused, do we need it here? goes for all other blocks 
 
     /* ---------------- SUBCYCLE 1 OF 1 ----------------- */
 /* Barrier required to make sure all threads are finished with their portion
@@ -1736,7 +1736,7 @@ void manual_omp_module2(int startPidx, int endPidx)
     static double deposit;   /* Must be static! */
     uint64_t pidx;
     //Part *part;
-    UniquePtr<Part> *part;
+    SharedPtr<Part> *part;
 
     /* ---------------- SUBCYCLE 1 OF 2 ----------------- */
 
@@ -1822,7 +1822,7 @@ void manual_omp_module3(int startPidx, int endPidx)
     static double deposit;   /* Must be static! */
     uint64_t pidx;
     //Part *part;
-    UniquePtr<Part> *part;
+    SharedPtr<Part> *part;
 
     /* ---------------- SUBCYCLE 1 OF 3 ----------------- */
 
@@ -1943,7 +1943,7 @@ void manual_omp_module4(int startPidx, int endPidx)
     static double deposit;   /* Must be static! */
     uint64_t pidx;
     //Part *part;
-    UniquePtr<Part> *part;
+    SharedPtr<Part> *part;
 
     /* ---------------- SUBCYCLE 1 OF 4 ----------------- */
 
@@ -2578,11 +2578,11 @@ void addPart (Part *part, long partId)
 
 // PORT - clomp-aifm implementation of addPart
 
-void addPart (UniquePtr<Part> part, long partId)
+void addPart (SharedPtr<Part> part, long partId)
 {
     // Put part pointer in array TODO - NULL checking is still remaining 
     //Part *part_local=(Part*)malloc(sizeof(Part*));
-    struct Part *part_local = new Part;
+    struct Part *part_local = new Part; //don't need this
 
     if ((partId < 0) || (partId >= CLOMP_numParts))
     {
@@ -2592,39 +2592,49 @@ void addPart (UniquePtr<Part> part, long partId)
 
     {
         DerefScope scope;
-        auto part_val = part.deref_mut(scope);
+        Part* part_val = part.deref_mut(scope);
         //cout<< typeid(part_val).name();
+        //part_val->partId=001;
 
         cout<< "Type checking inside addPart_1: " <<typeid(part_local).name()<<"\n";
-        part_val = part_local;
+        //part_val = part_local;
         cout<< "Type checking inside addPart_2: "<<typeid(part_val).name()<<"\n";
 
 
         auto &pointer_loc = partArray->at_mut(scope,partId);
         auto part_ptr = &pointer_loc;
 
-        auto part_ptr_val = part_ptr->deref_mut(scope);
+        // sanity check. causes issues. need to check. 
+        // if (part_ptr != nullptr)
+        // {
+        //     fprintf (stderr, "addPart error: partId (%i) already initialized!\n",
+        //         (int) partId);
+        //     exit (1);
+        // }
 
-        cout<< "Type checking inside addPart_3: "<<typeid(part_ptr_val).name()<<"\n";
+        //auto part_ptr_val = part_ptr->deref_mut(scope);
 
-        if (part_ptr_val != nullptr)
-        {
-            fprintf (stderr, "addPart error: partId (%i) already initialized!\n",
-                (int) partId);
-            exit (1);
-        }
+        //#cout<< "Type checking inside addPart_3: "<<typeid(part_ptr_val).name()<<"\n";
 
-        part_ptr_val = part_val;    // resembles to partArray[partId] = part
+        // if (part_ptr_val != nullptr)
+        // {
+        //     fprintf (stderr, "addPart error: partId (%i) already initialized!\n",
+        //         (int) partId);
+        //     exit (1);
+        // }
+
+        //#part_ptr_val = part_val;    // resembles to partArray[partId] = part
        
         part_val->partId = partId;
-        cout<< "Value checking inside addPart_4: "<< part_ptr_val->partId <<"\n";
+        //#cout<< "Value checking inside addPart_4: "<< part_ptr_val->partId <<"\n";
         part_val->zoneCount = CLOMP_zonesPerPart;
 
         part_val->deposit_ratio=((double)((1.5*(double)CLOMP_numParts)+partId))/
 	    ((double)(CLOMP_zonesPerPart*CLOMP_numParts));
 
         part_val->residue = 0.0;
-        cout<< "Value checking inside addPart_4: "<< part_ptr_val->residue <<"\n";
+
+        //#cout<< "Value checking inside addPart_4: "<< part_ptr_val->residue <<"\n";
 
         // PORT changed on 05/26/22; replace this block to set nullptr on first and last zones without first deref'ing
         // auto part_val_firstZone = part_val->firstZone->deref_mut(scope);
@@ -2634,21 +2644,32 @@ void addPart (UniquePtr<Part> part, long partId)
         // part_val_lastZone = nullptr;
 
         part_val->firstZone = nullptr;
-        part_val->firstZone = nullptr;
+        part_val->lastZone = nullptr;
+        if (part_val->firstZone != nullptr)
+        {
+            fprintf (stderr, "addPart error: partId (%i) already initialized!\n",
+                (int) partId);
+            exit (1);
+        }
+        part_val->expected_first_value = -1.0;
+        part_val->expected_residue = -1.0;
+
+        *part_ptr = part;
 
     }
-//#if 0
+#if 0
+    //this is just test
     {
         DerefScope scope;
 
         auto &pointer_loc = partArray->at_mut(scope,partId);
-        auto part_ptr = &pointer_loc;
+        auto part_ptr1 = &pointer_loc;
 
-        auto part_ptr_val = part_ptr->deref_mut(scope);
-        cout<<"partId inside addPart: " << part_ptr_val->partId <<".\n";
+        auto part_ptr_val1 = part_ptr1->deref_mut(scope);
+        cout<<"partId inside addPart: " << part_ptr_val1->partId <<".\n";
 
     }
-//#endif
+#endif
 #if 0
     // Set other part properties 
   {
@@ -2756,7 +2777,7 @@ void addZone (Part *part, Zone *zone)
 
 // PORT - aifm addZone 
 
-void addZone (UniquePtr<Part> *part, UniquePtr<Zone> *zone)
+void addZone (SharedPtr<Part> *part, SharedPtr<Zone> *zone)
 {
 
     if(part == nullptr)
@@ -2871,8 +2892,8 @@ void _main (void *arg)
     long partId, zoneId;
     double totalZoneCount;
     //Zone *zone, *prev_zone;
-    UniquePtr<Zone> *zone; // PORT
-    UniquePtr<Zone> *prev_zone;
+    SharedPtr<Zone> *zone; // PORT
+    SharedPtr<Zone> *prev_zone;
     double deposit, residue, percent_residue, part_deposit_bound;
     double deposit_diff_bound;
     double diterations;
@@ -2893,12 +2914,12 @@ void _main (void *arg)
     int bidx, aidx;
     //Part *sorted_part_list;
     //Part *part;
-    UniquePtr<Part> *sorted_part_list;  // PORT
-    UniquePtr<Part> *part;     
+    SharedPtr<Part> *sorted_part_list;  // PORT
+    SharedPtr<Part> *part;     
     
 
     //PORT 
-    //UniquePtr<Part> *part;  //as in clomp
+    //SharedPtr<Part> *part;  //as in clomp
 #ifdef WITH_MPI
     int provided, rc;
 #endif
@@ -3051,7 +3072,7 @@ FarMemManager *far_mem_manager = manager.get();
 
     /* Allocate part pointer array */
     // PORT - initialize partArray with AIFM
-    auto partArray1 = manager->allocate_array<UniquePtr<Part>, CLOMP_numParts>();
+    auto partArray1 = manager->allocate_array<SharedPtr<Part>, CLOMP_numParts>();
     partArray = &partArray1;
     if (&partArray == nullptr)
         {
@@ -3082,18 +3103,16 @@ FarMemManager *far_mem_manager = manager.get();
         DerefScope scope;
 
         auto &pointer_loc = partArray->at_mut(scope,partId);
-        pointer_loc_ptr_part = &pointer_loc;
+        auto pointer_loc_ptr_part_2 = &pointer_loc;
         
         //Changed 19/01/22; undo if soomething is broken
-        pointer_loc_ptr_part = nullptr;
+        pointer_loc_ptr_part_2 = nullptr;
         //auto raw_pointer_loc = pointer_loc_ptr_part->deref_mut(scope); // is this required? are we setting the array->part_pointer->part==null? or array->part_pointer==null? according to clomp it should be latter.
         //raw_pointer_loc = NULL;
     }
 
 
     
-
-
     /* Calculate 1/numParts to prevent divides in algorithm */
     CLOMP_partRatio = 1.0/((double) CLOMP_numParts);
 
@@ -3127,11 +3146,11 @@ FarMemManager *far_mem_manager = manager.get();
     for (partId = 0; partId < CLOMP_numParts; partId++)
     {
 	    //Part* part;
-        //UniquePtr<Part> *part;
+        //SharedPtr<Part> *part;
         
-        auto part = manager->allocate_unique_ptr<Part>();
+        auto part = manager->allocate_shared_ptr<Part>();
 
-        //UniquePtr<Part> part(new Part);
+        //SharedPtr<Part> part(new Part);
 
         // if (&part == nullptr)
         // {
@@ -3156,6 +3175,7 @@ FarMemManager *far_mem_manager = manager.get();
             const auto part_ptr_val = part_ptr->deref(scope);
             //cout<< "Testing partArray: "<<typeid(part_ptr_val).name()<<".\n";
             cout<<"Debug: partId inside Parts: " << part_ptr_val->partId <<".\n";
+            cout<<"Debug: partId inside Parts: " << part_ptr_val->expected_first_value <<".\n";
 
         }
     }
@@ -3164,13 +3184,13 @@ FarMemManager *far_mem_manager = manager.get();
 
     for (partId = 0; partId < CLOMP_numParts; partId++)
     {
-	    far_memory::Array<UniquePtr<Zone>, CLOMP_zonesPerPart> *ZoneArray;
-        //far_memory::Array<UniquePtr<Part>> *Zone;
+	    far_memory::Array<SharedPtr<Zone>, CLOMP_zonesPerPart> *ZoneArray;
+        //far_memory::Array<SharedPtr<Part>> *Zone;
         
         uint64_t zoneId;
-        UniquePtr<Zone> *zone;
+        SharedPtr<Zone> *zone;
 
-        auto zoneArray = manager->allocate_array<UniquePtr<Zone>, CLOMP_zonesPerPart>();
+        auto zoneArray = manager->allocate_array<SharedPtr<Zone>, CLOMP_zonesPerPart>();
         if (&zoneArray == nullptr)
         {
             fprintf (stderr, "Out of memory allocate zone array\n");
@@ -3181,8 +3201,8 @@ FarMemManager *far_mem_manager = manager.get();
         for (zoneId = 0; zoneId < CLOMP_zonesPerPart; zoneId++)
 	    {   
 
-            UniquePtr<Zone> *pointer_loc_zone;
-            UniquePtr<Part> *pointer_loc_ptr_part;
+            SharedPtr<Zone> *pointer_loc_zone;
+            SharedPtr<Part> *pointer_loc_ptr_part;
 
             {
                 /* Get the current zone being placed */
