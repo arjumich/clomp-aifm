@@ -151,6 +151,7 @@ void addPart (UniquePtr<Part> & part, uint64_t partId)
         auto _part_ptr_val = _part_ptr->deref_mut(scope);
 
         cout<< "Type checking inside addPart_ Part_ptr_val: "<<typeid(_part_ptr_val).name()<<"\n";
+        //cout<< "Type checking inside addPart_ Part_ptr_val: "<< static_cast<uint64_t>(_part_ptr->get_addr())<<"\n";
         
         if(_part_ptr_val== nullptr)
         {
