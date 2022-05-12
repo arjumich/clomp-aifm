@@ -2521,68 +2521,13 @@ void do_bestcase_omp_version(long num_iterations)
  * modified during the run.
  */
 
-/* 
-void addPart (Part *part, long partId)
-{
-    // Sanity check, make sure partId valid 
-    if ((partId < 0) || (partId >= CLOMP_numParts))
-    {
-	fprintf (stderr, "addPart error: partId (%i) out of bounds!\n", (int)partId);
-	exit (1);
-    }
-      
-
-    // Sanity check, make sure part not already added! 
-    if (partArray[partId] != NULL)
-    {
-	fprintf (stderr, "addPart error: partId (%i) already initialized!\n",
-		 (int) partId);
-	exit (1);
-    }
-
-    // Put part pointer in array 
-    partArray[partId] = part;
-
-    // Set partId 
-    part->partId = partId;
-    
-    // Set zone count for part (now fixed, used to be variable 
-    part->zoneCount = CLOMP_zonesPerPart;
-    
-    /* Updated June 2010 by John Gyllenhaal to pick a deposit ratio 
-     * for this part that keeps the math from underflowing and 
-     * makes it possible to come up with a sane error bounds.
-     * This math was picked experimentally to come up with 
-     * relatively large error bounds for the 'interesting testcase' inputs.
-     *
-     * This is part of an effort to separate rounding error due
-     * to inlining update_part() (and optimizing different ways) from
-     * incorrect results due to races or bad hardware.
-     * 
-     * The older deposit_ratio only really worked well for 100 zones.
-     
-    part->deposit_ratio=((double)((1.5*(double)CLOMP_numParts)+partId))/
-	((double)(CLOMP_zonesPerPart*CLOMP_numParts));
-    
-    // Initially no residue from previous passes 
-    part->residue = 0.0;
-    
-    // Initially, no zones attached to part 
-    part->firstZone = NULL;
-    part->lastZone = NULL;
-    
-    // Initially, don't know expected values (used for checking 
-    part->expected_first_value = -1.0;
-    part->expected_residue = -1.0;
-}*/
-
 // PORT - clomp-aifm implementation of addPart
 
 void addPart (SharedPtr<Part> part, long partId)
 {
     // Put part pointer in array TODO - NULL checking is still remaining 
     //Part *part_local=(Part*)malloc(sizeof(Part*));
-    struct Part *part_local = new Part; //don't need this
+    //struct Part *part_local = new Part; //don't need this
 
     if ((partId < 0) || (partId >= CLOMP_numParts))
     {
@@ -2611,19 +2556,6 @@ void addPart (SharedPtr<Part> part, long partId)
         //         (int) partId);
         //     exit (1);
         // }
-
-        //auto part_ptr_val = part_ptr->deref_mut(scope);
-
-        //#cout<< "Type checking inside addPart_3: "<<typeid(part_ptr_val).name()<<"\n";
-
-        // if (part_ptr_val != nullptr)
-        // {
-        //     fprintf (stderr, "addPart error: partId (%i) already initialized!\n",
-        //         (int) partId);
-        //     exit (1);
-        // }
-
-        //#part_ptr_val = part_val;    // resembles to partArray[partId] = part
        
         part_val->partId = partId;
         //#cout<< "Value checking inside addPart_4: "<< part_ptr_val->partId <<"\n";
@@ -2670,110 +2602,7 @@ void addPart (SharedPtr<Part> part, long partId)
 
     }
 #endif
-#if 0
-    // Set other part properties 
-  {
-
-    DerefScope scope;
-    auto part_val = part->deref_mut(scope);
-
-    /* Set partId */
-    part_val->partId = partId;
-      
-    /* Set zone count for part (now fixed, used to be variable */
-    part_val->zoneCount = CLOMP_zonesPerPart;
-    
-
-    /* Updated June 2010 by John Gyllenhaal to pick a deposit ratio 
-     * for this part that keeps the math from underflowing and 
-     * makes it possible to come up with a sane error bounds.
-     * This math was picked experimentally to come up with 
-     * relatively large error bounds for the 'interesting testcase' inputs.
-     *
-     * This is part of an effort to separate rounding error due
-     * to inlining update_part() (and optimizing different ways) from
-     * incorrect results due to races or bad hardware.
-     * 
-     * The older deposit_ratio only really worked well for 100 zones.
-     */
-    part_val->deposit_ratio=((double)((1.5*(double)CLOMP_numParts)+partId))/
-	((double)(CLOMP_zonesPerPart*CLOMP_numParts));
-    
-    /* Initially no residue from previous passes */
-    part_val->residue = 0.0;
-    
-    /* Initially, no zones attached to part */
-    part_val->firstZone = NULL;
-    part_val->lastZone = NULL;
-    
-    /* Initially, don't know expected values (used for checking */
-    part_val->expected_first_value = -1.0;
-    part_val->expected_residue = -1.0;
-
-  }
-#endif
 }
-
-
-
-/* Appends zone to the part identified by partId.   Done in separate routine
- * to facilitate the zones being allocated in various ways (such as by 
- * different threads, randomly, etc.)
- */
-
-/*
-void addZone (Part *part, Zone *zone)
-{
-    // Sanity check, make sure not NULL 
-    if (part == NULL)
-    {
-	fprintf (stderr, "addZone error: part NULL!\n");
-	exit (1);
-    }
-
-    // Sanity check, make sure zone not NULL 
-    if (zone == NULL)
-    {
-	fprintf (stderr, "addZone error: zone NULL!\n");
-	exit (1);
-    }
-
-    // Touch/initialize all of zone to force all memory to be really 
-    // allocated (CLOMP_zoneSize is often bigger than the portion of the
-    // zone we use)
-
-    memset (zone, 0xFF, CLOMP_zoneSize);
-
-
-    // If not existing zones, place at head of list 
-    if (part->lastZone == NULL)
-    {
-	 Give first zone a zoneId of 1 
-	zone->zoneId = 1;
-
-	// First and last zone 
-	part->firstZone = zone;
-	part->lastZone = zone;
-
-    }
-    
-    // Otherwise, put after last zone 
-    else 
-    {
-	// Give this zone the last Zone's id + 1 
-	zone->zoneId = part->lastZone->zoneId + 1;
-	
-	part->lastZone->nextZone = zone;
-	part->lastZone = zone;
-    }
-
-    // Always placed at end 
-    zone->nextZone = NULL;
-    
-    // Inialized the rest of the zone fields 
-    zone->partId = part->partId;
-    zone->value = 0.0;
-} */
 
 // PORT - aifm addZone 
 
@@ -3080,22 +2909,6 @@ FarMemManager *far_mem_manager = manager.get();
             exit (1);
         }
 
-
-    // TODO - come back later to do the NULL checking
-    //partArray = (Part **) malloc (CLOMP_numParts * sizeof (Part*));
-    /*if (partArray == NULL)
-    {
-	fprintf (stderr, "Out of memory allocating part array\n");
-	exit (1);
-    }
-
-     Initialize poitner array to NULL initially 
-    for (partId = 0; partId < CLOMP_numParts; partId++)
-    {
-	partArray[partId] = NULL;
-    }
-    */
-
     // PORT - initialize partArray to NULL
 
     for (partId = 0; partId < CLOMP_numParts; partId++)
@@ -3123,30 +2936,10 @@ FarMemManager *far_mem_manager = manager.get();
      */
 //#pragma omp parallel for private(partId) schedule(static) 
 
-    /*
-    for (partId = 0; partId < CLOMP_numParts; partId++)
-    {
-	Part *part;
-	if ((part= (Part *) malloc (sizeof (Part))) == NULL)
-	{
-	    fprintf (stderr, "Out of memory allocating part\n");
-	    exit (1);
-	}
-
-	// Call standard part initializer for part just allocated.
-	// Allows parts to be allocated as desired.
-	//
-	addPart(part, partId);
-    }
-
-    */
-
     // PORT - addPart; TODO - NULL checking is remaining
 
     for (partId = 0; partId < CLOMP_numParts; partId++)
     {
-	    //Part* part;
-        //SharedPtr<Part> *part;
         
         auto part = manager->allocate_shared_ptr<Part>();
 
@@ -3179,8 +2972,6 @@ FarMemManager *far_mem_manager = manager.get();
 
         }
     }
-
-
 
     for (partId = 0; partId < CLOMP_numParts; partId++)
     {
