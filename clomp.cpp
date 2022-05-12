@@ -2541,7 +2541,7 @@ void addPart (SharedPtr<Part> part, long partId)
         //cout<< typeid(part_val).name();
         //part_val->partId=001;
 
-        cout<< "Type checking inside addPart_1: " <<typeid(part_local).name()<<"\n";
+        //cout<< "Type checking inside addPart_1: " <<typeid(part_local).name()<<"\n";
         //part_val = part_local;
         cout<< "Type checking inside addPart_2: "<<typeid(part_val).name()<<"\n";
 
@@ -2606,7 +2606,7 @@ void addPart (SharedPtr<Part> part, long partId)
 
 // PORT - aifm addZone 
 
-void addZone (SharedPtr<Part> *part, SharedPtr<Zone> *zone)
+void addZone (SharedPtr<Part> *part, SharedPtr<Zone> zone)
 {
 
     if(part == nullptr)
@@ -2620,8 +2620,8 @@ void addZone (SharedPtr<Part> *part, SharedPtr<Zone> *zone)
     // TODO - Sanity check(NULL check) is still remaining 
     {
         DerefScope scope;
-        auto zone_val = zone->deref_mut(scope);
-        zone_val = zone_local;
+        auto zone_val = zone.deref_mut(scope);
+        //zone_val = zone_local;
 
         if(zone_val== nullptr)
         {
@@ -2641,15 +2641,17 @@ void addZone (SharedPtr<Part> *part, SharedPtr<Zone> *zone)
         //auto part_val = part.deref_mut(scope); // is this working? 
         //auto zone_val = zone.deref_mut(scope);     // same scope for both zone and part 
         //cout<<"partId: " << part_val->partId <<".\n";
-        auto part_firstzone = part_val->firstZone->deref_mut(scope);
+
+        //commented after shared pointer
+        //auto part_firstzone = part_val->firstZone->deref_mut(scope);
         auto part_lastzone = part_val->lastZone->deref_mut(scope);
         
 
-        if (part_lastzone==nullptr)
+        if (part_val->firstZone==nullptr)
         {
             zone_val->zoneId = 1;
-            part_firstzone = zone_val;
-	        part_lastzone = zone_val;
+            part_val->firstZone = &zone;
+	        part_val->firstZone = &zone;
         }
         else // TODO - zone dereferencing is stil incomplete; how to do for "lastZone->zoneId". Solved. Seems to be working, error gone  
         {
@@ -2658,14 +2660,15 @@ void addZone (SharedPtr<Part> *part, SharedPtr<Zone> *zone)
             zone_val->zoneId = part_lastzone->zoneId + 1;
         
             auto part_lastzone_nextZone = part_lastzone->nextZone->deref_mut(scope);
-            part_lastzone_nextZone = zone_val;
-            part_lastzone = zone_val;
+            part_lastzone->nextZone = &zone;
+            part_val->lastZone = &zone;
             //zone_val->zoneId = part_val->lastZone->zoneId + 1;
             //part_val->lastZone->nextZone = zone;
         }
 
-        auto zone_val_nextZone = zone_val->nextZone->deref_mut(scope);
-        zone_val_nextZone = nullptr;
+        //auto zone_val_nextZone = zone_val->nextZone->deref_mut(scope);
+        
+        zone_val->nextZone = nullptr;
         zone_val->partId = part_val->partId;
         zone_val->value = 0.0;
     }
@@ -2979,7 +2982,8 @@ FarMemManager *far_mem_manager = manager.get();
         //far_memory::Array<SharedPtr<Part>> *Zone;
         
         uint64_t zoneId;
-        SharedPtr<Zone> *zone;
+        //SharedPtr<Zone> *zone;
+        auto zone = manager->allocate_shared_ptr<Zone>();
 
         auto zoneArray = manager->allocate_array<SharedPtr<Zone>, CLOMP_zonesPerPart>();
         if (&zoneArray == nullptr)
@@ -3001,7 +3005,10 @@ FarMemManager *far_mem_manager = manager.get();
 	            auto &pointer_loc_z = zoneArray.at_mut(scope,zoneId);
                 //pointer_loc_zone = std::move(pointer_loc_z);
                 //pointer_loc_zone = &pointer_loc_z;
-                zone = &pointer_loc_z;
+                pointer_loc_zone = &pointer_loc_z;
+
+                zone = *pointer_loc_zone;
+
 
                 auto &pointer_loc_part = partArray->at_mut(scope,partId);
                 //pointer_loc_ptr_part = std::move(pointer_loc_part);
