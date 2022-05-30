@@ -91,10 +91,15 @@ function run_program {
     #shift
     #echo $first_arg  $@
 
+    echo "file clomp"
+    echo "handle SIGUSR2 nostop noprint"
+    echo "handle SIGUSR1 nostop noprint"
+    echo "r /users/arjunsh/AIFM/aifm/configs/client.config 18.18.1.3:8000 1 -1 1 400 32 1 100"
+
     echo "$1 $AIFM_PATH/configs/client.config \
                            $MEM_SERVER_DPDK_IP:$MEM_SERVER_PORT ${@:2}"
 
-    sudo stdbuf -o0 sh -c "$1 $AIFM_PATH/configs/client.config \
+    sudo stdbuf -o0 sh -c gdb "$1 $AIFM_PATH/configs/client.config \
                            $MEM_SERVER_DPDK_IP:$MEM_SERVER_PORT $2 $3 $4 $5 $6 $7 $8"
 }
 

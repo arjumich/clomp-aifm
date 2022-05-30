@@ -2606,7 +2606,7 @@ void addPart (SharedPtr<Part> part, long partId)
 
 // PORT - aifm addZone 
 
-void addZone (SharedPtr<Part> *part, SharedPtr<Zone> zone)
+void addZone (SharedPtr<Part> *part, SharedPtr<Zone> & zone)
 {
 
     if(part == nullptr)
@@ -2621,9 +2621,10 @@ void addZone (SharedPtr<Part> *part, SharedPtr<Zone> zone)
     {
         DerefScope scope;
         auto zone_val = zone.deref_mut(scope);
-        //zone_val = zone_local;
+        cout<< "Inside addzone: type of zone_val is: "<<typeid(zone_val).name()<<".\n";
+        zone_val = zone_local;
 
-        if(zone_val== nullptr)
+        if(&zone == nullptr)
         {
           cout<< "error";
           //exit(0);
@@ -2644,19 +2645,31 @@ void addZone (SharedPtr<Part> *part, SharedPtr<Zone> zone)
 
         //commented after shared pointer
         //auto part_firstzone = part_val->firstZone->deref_mut(scope);
-        auto part_lastzone = part_val->lastZone->deref_mut(scope);
+        
+        //auto part_lastzone = part_val->lastZone->deref_mut(scope);
         
 
         if (part_val->firstZone==nullptr)
         {
             zone_val->zoneId = 1;
-            part_val->firstZone = &zone;
-	        part_val->firstZone = &zone;
+            cout<< "type of part_val->firstZone: "<<typeid(part_val->firstZone).name()<<".\n";
+            part_val->firstZone = &zone; 
+            //
+            auto part_firstzone = part_val->firstZone->deref_mut(scope);
+            cout<< "zoneId of part_firstZone :"<<part_firstzone->zoneId << endl;
+	        //
+            part_val->lastZone = &zone;     //this probably isn't proper
+            cout<< "type of part_val->lastZone: "<<typeid(part_val->lastZone).name()<<".\n";
+            cout<< "type of zone: "<<typeid(zone).name()<<".\n";
         }
         else // TODO - zone dereferencing is stil incomplete; how to do for "lastZone->zoneId". Solved. Seems to be working, error gone  
         {
             /* Give this zone the last Zone's id + 1 */
             //auto lastzone_ref = part_val->lastZone.deref_mut(scope);
+
+            auto part_lastzone = part_val->lastZone->deref_mut(scope);
+            cout<< "type of part_lastzone: "<<typeid(part_lastzone).name()<<".\n";
+            cout<< "zoneId of part_lastzone :"<<part_lastzone->zoneId << endl;
             zone_val->zoneId = part_lastzone->zoneId + 1;
         
             auto part_lastzone_nextZone = part_lastzone->nextZone->deref_mut(scope);
@@ -2985,6 +2998,10 @@ FarMemManager *far_mem_manager = manager.get();
         //SharedPtr<Zone> *zone;
         auto zone = manager->allocate_shared_ptr<Zone>();
 
+        // I don't think we need to create a zoneArray. in clomp they were creating 
+        // zoneArray to direcly allocate memory for all zones. 
+        // since allocate_shared_ptr can already do the same, maybe crating zoneArray
+        // is just pointless? need to discuss with dr. roy. 
         auto zoneArray = manager->allocate_array<SharedPtr<Zone>, CLOMP_zonesPerPart>();
         if (&zoneArray == nullptr)
         {
@@ -2997,7 +3014,7 @@ FarMemManager *far_mem_manager = manager.get();
 	    {   
 
             SharedPtr<Zone> *pointer_loc_zone;
-            SharedPtr<Part> *pointer_loc_ptr_part;
+            SharedPtr<Part> *pointer_loc_ptr_part1;
 
             {
                 /* Get the current zone being placed */
@@ -3012,7 +3029,7 @@ FarMemManager *far_mem_manager = manager.get();
 
                 auto &pointer_loc_part = partArray->at_mut(scope,partId);
                 //pointer_loc_ptr_part = std::move(pointer_loc_part);
-                pointer_loc_ptr_part = &pointer_loc_part;
+                pointer_loc_ptr_part1 = &pointer_loc_part;
 
                 // auto val_deref = pointer_loc_ptr_part->deref_mut(scope); //  TEST
                 // cout<<"partId: " << val_deref->partId <<".\n";
@@ -3024,7 +3041,7 @@ FarMemManager *far_mem_manager = manager.get();
             cout<< "Nullptr Error just before calling addZone";
             //exit(0);
             }
-            addZone (pointer_loc_ptr_part, zone);
+            addZone (pointer_loc_ptr_part1, zone);
             //addZone (std::move(pointer_loc_ptr_part), pointer_loc_zone);
 
         }
